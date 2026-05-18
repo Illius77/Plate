@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition Tracker — Design Reference</title>
+<!--
+  DESIGN REFERENCE FILE — НЕ production код.
+  Используй этот файл как эталон дизайна при вёрстке index.html.
+  Все цвета, шрифты, отступы, компоненты — бери отсюда.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #1a1a1a;
+  --card: #252525;
+  --border: #333;
+  --txt: #f0f0f0;
+  --muted: #888;
+  --acc: #a8e063;
+  --acc2: #6db33f;
+  --ai-bord: #2d4a2d;
+
+  /* Макросы */
+  --color-protein: #D85A30;
+  --color-carbs: #378ADD;
+  --color-fat: #EF9F27;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #111;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* =====================
+   ОБОЛОЧКА ПРИЛОЖЕНИЯ
+   ===================== */
+.app {
+  background: var(--bg);
+  border-radius: 16px;
+  max-width: 380px;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen { display: none; flex-direction: column; min-height: 580px; }
+.screen.active { display: flex; }
+
+.scrollable {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scrollable::-webkit-scrollbar { display: none; }
+
+/* =====================
+   КАРТОЧКИ
+   ===================== */
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* =====================
+   НИЖНЯЯ НАВИГАЦИЯ
+   ===================== */
+.bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 0.5px solid var(--border);
+  background: var(--bg);
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 0;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 10px;
+}
+.nav-btn i { font-size: 20px; }
+.nav-btn.active { color: var(--acc); }
+
+/* =====================
+   СЕКЦИИ ПРИЁМОВ ПИЩИ
+   ===================== */
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 14px;
+  cursor: pointer;
+}
+.meal-header .title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--txt);
+}
+
+.meal-items {
+  border-top: 0.5px solid var(--border);
+  padding: 8px 14px;
+  display: none;
+  flex-direction: column;
+  gap: 0;
+}
+.meal-items.open { display: flex; }
+
+/* Строка продукта в списке приёма пищи */
+.food-row { padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+.food-row:last-child { border-bottom: none; }
+
+.food-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.food-row-name { font-size: 14px; color: var(--txt); }
+.food-row-name strong { font-weight: 500; }
+.food-row-kcal { font-size: 13px; color: var(--muted); }
+
+/* Макросы под продуктом — три числа крупно */
+.food-row-macros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.food-macro-val { font-size: 14px; font-weight: 500; color: var(--txt); }
+
+/* =====================
+   СУММАРНАЯ КАРТОЧКА ДНЯ
+   ===================== */
+.summary-top {
+  padding: 14px 16px 8px;
+}
+.summary-top .kcal-main {
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--txt);
+}
+.summary-top .kcal-goal {
+  font-size: 13px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+.summary-top .kcal-left {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--acc);
+}
+.progress-bar-wrap {
+  height: 5px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--acc);
+  border-radius: 4px;
+  transition: width .3s;
+}
+
+/* Макросы в суммарной карточке — три колонки */
+.macro-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 0.5px solid var(--border);
+}
+.macro-col {
+  padding: 12px 14px;
+  border-right: 0.5px solid var(--border);
+}
+.macro-col:last-child { border-right: none; }
+.macro-col .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.macro-col .val { font-size: 18px; font-weight: 500; color: var(--txt); }
+.macro-col .bar-wrap {
+  height: 3px;
+  background: #333;
+  border-radius: 3px;
+  margin-top: 6px;
+}
+.macro-col .bar { height: 100%; border-radius: 3px; }
+
+/* =====================
+   ПОИСК
+   ===================== */
+.search-input {
+  width: 100%;
+  background: #2a2a2a;
+  border: 0.5px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 16px;
+  color: var(--txt);
+  font-size: 14px;
+  outline: none;
+}
+.search-input::placeholder { color: var(--muted); }
+
+.tabs {
+  display: flex;
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 8px;
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tab.active {
+  color: var(--acc);
+  border-bottom: 2px solid var(--acc);
+}
+
+/* Строка продукта в списке поиска */
+.food-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+}
+.food-item:last-child { border-bottom: none; }
+.food-item:active { opacity: 0.7; }
+
+/* =====================
+   СКАНЕР
+   ===================== */
+.scan-frame {
+  width: 220px;
+  height: 160px;
+  border-radius: 12px;
+  background: #111;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: #e24b4a;
+  animation: scan 2s ease-in-out infinite;
+}
+@keyframes scan {
+  0%, 100% { top: 20%; }
+  50% { top: 75%; }
+}
+/* Угловые маркеры сканера */
+.scan-corner-tl, .scan-corner-tr, .scan-corner-bl, .scan-corner-br {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: var(--acc);
+  border-style: solid;
+}
+.scan-corner-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; border-radius: 2px 0 0 0; }
+.scan-corner-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; border-radius: 0 2px 0 0; }
+.scan-corner-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; border-radius: 0 0 0 2px; }
+.scan-corner-br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; border-radius: 0 0 2px 0; }
+
+/* =====================
+   AI ЭКРАН
+   ===================== */
+.ai-message {
+  background: #222d22;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--txt);
+  line-height: 1.6;
+}
+.ai-chip {
+  font-size: 11px;
+  background: #2a3a2a;
+  color: var(--acc);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 0.5px solid var(--ai-bord);
+  cursor: pointer;
+}
+.chips-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* =====================
+   BOTTOM SHEET (карточка добавления)
+   ===================== */
+.overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 50;
+  align-items: flex-end;
+}
+.overlay.open { display: flex; }
+
+.product-sheet {
+  background: #1e1e1e;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  padding: 20px 16px 16px;
+}
+
+.gram-input {
+  width: 100%;
+  background: #2a2a2a;
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--txt);
+  font-size: 18px;
+  outline: none;
+  text-align: center;
+}
+
+/* Кнопки выбора приёма пищи */
+.meal-opt {
+  padding: 10px;
+  border-radius: 10px;
+  border: 0.5px solid var(--border);
+  background: #2a2a2a;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+.meal-opt.selected {
+  border-color: var(--acc);
+  color: var(--acc);
+  background: #1e2a1e;
+}
+
+/* Сетка макросов в карточке продукта */
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+.macro-cell {
+  background: #2a2a2a;
+  padding: 12px;
+  text-align: center;
+}
+.macro-cell .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.macro-cell .val { font-size: 17px; font-weight: 500; color: var(--txt); }
+
+/* Кнопка сохранить */
+.save-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--acc2);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.save-btn:active { opacity: 0.8; }
+
+/* =====================
+   КАЛЕНДАРЬ
+   ===================== */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.cal-head { text-align: center; padding: 6px 2px; font-size: 11px; color: var(--muted); }
+.cal-day { text-align: center; padding: 7px 2px; font-size: 14px; color: var(--txt); cursor: pointer; border-radius: 50%; }
+.cal-day.today { background: var(--acc); color: #111; font-weight: 500; }
+.cal-day.muted { color: var(--muted); }
+
+/* =====================
+   УТИЛИТЫ
+   ===================== */
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+}
+.section-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== ЭКРАН: ДНЕВНИК ==================== -->
+  <div class="screen active" id="s-diary">
+
+    <div style="padding:12px 14px 0;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:17px;font-weight:500;color:var(--txt);">Сегодня</span>
+      <button class="btn-icon" onclick="showCal()">
+        <i class="ti ti-calendar" style="font-size:20px;" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <!-- Календарь (скрыт по умолчанию) -->
+    <div id="cal-panel" style="display:none;padding:10px 14px 4px;">
+      <div class="card" style="padding:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:500;color:var(--txt);">Май 2026</span>
+          <span style="font-size:12px;color:var(--acc);cursor:pointer;" onclick="showCal()">Закрыть</span>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-head">Пн</div><div class="cal-head">Вт</div><div class="cal-head">Ср</div>
+          <div class="cal-head">Чт</div><div class="cal-head">Пт</div><div class="cal-head">Сб</div><div class="cal-head">Вс</div>
+          <div class="cal-day muted">27</div><div class="cal-day muted">28</div><div class="cal-day muted">29</div>
+          <div class="cal-day muted">30</div><div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div>
+          <div class="cal-day">4</div><div class="cal-day">5</div><div class="cal-day">6</div>
+          <div class="cal-day">7</div><div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div>
+          <div class="cal-day">11</div><div class="cal-day">12</div><div class="cal-day">13</div>
+          <div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div>
+          <div class="cal-day today">17</div>
+          <div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day">20</div>
+          <div class="cal-day">21</div><div class="cal-day">22</div><div class="cal-day">23</div><div class="cal-day">24</div>
+          <div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div>
+          <div class="cal-day">28</div><div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day">31</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scrollable">
+
+      <!-- Суммарная карточка -->
+      <div class="card">
+        <div class="summary-top">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+            <div>
+              <span class="kcal-main" id="d-kcal">609</span>
+              <span class="kcal-goal">/ 2000 ккал</span>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:12px;color:var(--muted);">осталось</span><br>
+              <span class="kcal-left" id="d-left">1391</span>
+            </div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="d-bar" style="width:30%;"></div>
+          </div>
+        </div>
+        <div class="macro-row">
+          <div class="macro-col">
+            <div class="lbl">Жиры</div>
+            <div class="val" id="d-f">22г</div>
+            <div class="bar-wrap"><div class="bar" id="d-fb" style="background:var(--color-fat);width:31%;"></div></div>
+          </div>
+          <div class="macro-col">
+            <div class="lbl">Углев</div>
+            <div class="val" id="d-c">81г</div>
+            <div class="bar-wrap"><div class="bar" id="d-cb" style="background:var(--color-carbs);width:37%;"></div></div>
+          </div>
+          <div class="macro-col">
+            <div class="lbl">Белок</div>
+            <div class="val" id="d-p">55г</div>
+            <div class="bar-wrap"><div class="bar" id="d-pb" style="background:var(--color-protein);width:37%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Завтрак -->
+      <div class="card">
+        <div class="meal-header" onclick="toggleMeal('b')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🌅</span>
+            <span class="title">Завтрак</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;color:var(--muted);" id="bh-kcal">609 ккал</span>
+            <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="meal-items open" id="meal-b">
+          <div class="food-row">
+            <div class="food-row-top">
+              <span class="food-row-name">Овсянка <strong>200г</strong></span>
+              <span class="food-row-kcal">340</span>
+            </div>
+            <div class="food-row-macros">
+              <span class="food-macro-val">7</span>
+              <span class="food-macro-val">70</span>
+              <span class="food-macro-val">12</span>
+            </div>
+          </div>
+          <div class="food-row">
+            <div class="food-row-top">
+              <span class="food-row-name">Яблоко <strong>150г</strong></span>
+              <span class="food-row-kcal">79</span>
+            </div>
+            <div class="food-row-macros">
+              <span class="food-macro-val">0.2</span>
+              <span class="food-macro-val">14</span>
+              <span class="food-macro-val">0.4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Обед -->
+      <div class="card">
+        <div class="meal-header" onclick="toggleMeal('l')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">☀️</span>
+            <span class="title">Обед</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;color:var(--muted);" id="lh-kcal"></span>
+            <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="meal-items" id="meal-l"></div>
+      </div>
+
+      <!-- Ужин -->
+      <div class="card">
+        <div class="meal-header" onclick="toggleMeal('d')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🌆</span>
+            <span class="title">Ужин</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;color:var(--muted);" id="dh-kcal"></span>
+            <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="meal-items" id="meal-d"></div>
+      </div>
+
+      <!-- Перекус -->
+      <div class="card">
+        <div class="meal-header" onclick="toggleMeal('s')">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">🌙</span>
+            <span class="title">Перекус</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;color:var(--muted);" id="sh-kcal"></span>
+            <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="meal-items" id="meal-s"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== ЭКРАН: ПОИСК ==================== -->
+  <div class="screen" id="s-search">
+    <div style="padding:12px 14px 0;">
+      <span style="font-size:16px;font-weight:500;color:var(--acc);">Еда</span>
+    </div>
+    <div class="scrollable">
+      <input class="search-input" placeholder="🔍  Поиск продукта..." type="text"/>
+      <div class="tabs">
+        <div class="tab active">Еда</div>
+        <div class="tab">Недавние</div>
+      </div>
+      <div class="card" style="padding:0 14px;">
+        <div class="food-item" onclick="openProduct('granini orange 100%','Granini','46','0.1','11.2','0.3')">
+          <div>
+            <div style="font-size:14px;color:var(--txt);">granini orange 100%</div>
+            <div style="font-size:11px;color:var(--muted);">46 ккал / 100мл</div>
+          </div>
+          <i class="ti ti-arrow-up-right" style="font-size:16px;color:var(--muted);" aria-hidden="true"></i>
+        </div>
+        <div class="food-item" onclick="openProduct('nature active bio tofu','Nature Active','82','4.8','1.9','8.0')">
+          <div>
+            <div style="font-size:14px;color:var(--txt);">nature active bio tofu</div>
+            <div style="font-size:11px;color:var(--muted);">82 ккал / 100г</div>
+          </div>
+          <i class="ti ti-arrow-up-right" style="font-size:16px;color:var(--muted);" aria-hidden="true"></i>
+        </div>
+        <div class="food-item" onclick="openProduct('migros high protein','Migros','110','2.3','4.1','15.2')">
+          <div>
+            <div style="font-size:14px;color:var(--txt);">migros high protein</div>
+            <div style="font-size:11px;color:var(--muted);">110 ккал / 100г</div>
+          </div>
+          <i class="ti ti-arrow-up-right" style="font-size:16px;color:var(--muted);" aria-hidden="true"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ЭКРАН: СКАНЕР ==================== -->
+  <div class="screen" id="s-scan">
+    <div style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:16px;font-weight:500;color:var(--txt);">Сканировать штрихкод</span>
+      <span style="font-size:13px;color:var(--acc);">Клавиатура</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;">
+      <p style="font-size:13px;color:var(--muted);">Поместите штрихкод в рамку</p>
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+        <div class="scan-corner-tl"></div>
+        <div class="scan-corner-tr"></div>
+        <div class="scan-corner-bl"></div>
+        <div class="scan-corner-br"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0.1;">
+          <i class="ti ti-barcode" style="font-size:80px;color:var(--acc);" aria-hidden="true"></i>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);">EAN-13, EAN-8, UPC-A</p>
+      <div style="display:flex;gap:12px;">
+        <button style="background:#2a2a2a;border:0.5px solid var(--border);border-radius:20px;padding:10px 24px;color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <i class="ti ti-camera" aria-hidden="true"></i> Фото
+        </button>
+        <button style="background:var(--acc2);border:none;border-radius:20px;padding:10px 24px;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <i class="ti ti-barcode" aria-hidden="true"></i> Код
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ЭКРАН: AI ==================== -->
+  <div class="screen" id="s-ai">
+    <div style="padding:12px 14px 0;display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;">
+        <i class="ti ti-sparkles" style="font-size:14px;color:#111;" aria-hidden="true"></i>
+      </div>
+      <span style="font-size:16px;font-weight:500;color:var(--txt);">AI нутрициолог</span>
+    </div>
+    <div class="scrollable">
+      <div class="ai-message">
+        Белка сегодня <strong style="color:var(--acc);">55г из 150г</strong> — главный пробел.
+        До цели ещё 1391 ккал. На прошлой неделе ты часто ел творог и куриную грудку —
+        добавь на обед, закроет ~60г белка.
+      </div>
+      <div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:6px;">из твоего арсенала</p>
+        <div class="chips-row">
+          <span class="ai-chip">творог 200г → +34г</span>
+          <span class="ai-chip">куриная грудка → +31г</span>
+          <span class="ai-chip">яйца 3шт → +19г</span>
+        </div>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">сводка дня</p>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Жиры</span>
+            <span style="color:var(--color-fat);">22г / 70г</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Углеводы</span>
+            <span style="color:var(--txt);">81г / 220г</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Белок</span>
+            <span style="color:var(--color-protein);">55г / 150г ⚠️</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Калории</span>
+            <span style="color:var(--acc);">609 / 2000</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <input type="text" placeholder="спросить..."
+          style="flex:1;font-size:13px;background:#222;border:0.5px solid var(--border);
+                 color:var(--txt);border-radius:20px;padding:10px 14px;outline:none;"/>
+        <button style="width:40px;height:40px;border-radius:50%;background:var(--acc2);
+                       border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-send" style="font-size:16px;color:#fff;" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BOTTOM SHEET: карточка продукта ==================== -->
+  <div class="overlay" id="product-overlay" onclick="if(event.target===this)closeProduct()">
+    <div class="product-sheet">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <div>
+          <div style="font-size:12px;color:var(--muted);" id="p-brand"></div>
+          <div style="font-size:18px;font-weight:500;color:var(--txt);" id="p-name"></div>
+        </div>
+        <button class="btn-icon" onclick="closeProduct()">
+          <i class="ti ti-x" style="font-size:20px;" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="section-label">Добавить в дневник</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <button onclick="changeGrams(-10)"
+          style="width:36px;height:36px;border-radius:8px;border:0.5px solid var(--border);
+                 background:#2a2a2a;color:var(--txt);font-size:20px;cursor:pointer;
+                 display:flex;align-items:center;justify-content:center;">−</button>
+        <input class="gram-input" id="gram-inp" type="number" value="100" min="1" oninput="updateMacros()" style="flex:1;"/>
+        <button onclick="changeGrams(10)"
+          style="width:36px;height:36px;border-radius:8px;border:0.5px solid var(--border);
+                 background:#2a2a2a;color:var(--txt);font-size:20px;cursor:pointer;
+                 display:flex;align-items:center;justify-content:center;">+</button>
+        <span style="font-size:14px;color:var(--muted);">г</span>
+      </div>
+
+      <div class="section-label">Приём пищи</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;">
+        <div class="meal-opt selected" id="mo-b" onclick="selectMeal('b')">🌅 Завтрак</div>
+        <div class="meal-opt" id="mo-l" onclick="selectMeal('l')">☀️ Обед</div>
+        <div class="meal-opt" id="mo-d" onclick="selectMeal('d')">🌆 Ужин</div>
+        <div class="meal-opt" id="mo-s" onclick="selectMeal('s')">🌙 Перекус</div>
+      </div>
+
+      <div class="macro-grid">
+        <div class="macro-cell">
+          <div class="lbl">Калории</div>
+          <div class="val" id="m-kcal">82</div>
+        </div>
+        <div class="macro-cell">
+          <div class="lbl">Белок</div>
+          <div class="val" id="m-p" style="color:var(--color-protein);">8.0г</div>
+        </div>
+        <div class="macro-cell">
+          <div class="lbl">Жиры</div>
+          <div class="val" id="m-f" style="color:var(--color-fat);">4.8г</div>
+        </div>
+        <div class="macro-cell">
+          <div class="lbl">Углев</div>
+          <div class="val" id="m-c" style="color:var(--color-carbs);">1.9г</div>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="saveFood()">Сохранить</button>
+    </div>
+  </div>
+
+  <!-- ==================== НИЖНЯЯ НАВИГАЦИЯ ==================== -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-diary" onclick="nav('diary')">
+      <i class="ti ti-notebook" aria-hidden="true"></i>Дневник
+    </button>
+    <button class="nav-btn" id="nav-search" onclick="nav('search')">
+      <i class="ti ti-search" aria-hidden="true"></i>Поиск
+    </button>
+    <button class="nav-btn" id="nav-scan" onclick="nav('scan')">
+      <i class="ti ti-barcode" aria-hidden="true"></i>Сканер
+    </button>
+    <button class="nav-btn" id="nav-ai" onclick="nav('ai')">
+      <i class="ti ti-sparkles" aria-hidden="true"></i>AI
+    </button>
+  </div>
+
+</div>
+
+<script>
+var cur = { name:'', brand:'', kcal:0, p:0, c:0, f:0 };
+var selMeal = 'b';
+var totals = { kcal:609, p:55, c:81, f:22 };
+var mealTotals = { b:609, l:0, d:0, s:0 };
+var goals = { kcal:2000, p:150, c:220, f:70 };
+
+function nav(s) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('s-' + s).classList.add('active');
+  document.getElementById('nav-' + s).classList.add('active');
+}
+
+function toggleMeal(id) {
+  document.getElementById('meal-' + id).classList.toggle('open');
+}
+
+function showCal() {
+  const p = document.getElementById('cal-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function openProduct(name, brand, kcal, f, c, p) {
+  cur = { name, brand, kcal:+kcal, p:+p, c:+c, f:+f };
+  document.getElementById('p-name').textContent = name;
+  document.getElementById('p-brand').textContent = brand;
+  document.getElementById('gram-inp').value = 100;
+  selectMeal('b');
+  updateMacros();
+  document.getElementById('product-overlay').classList.add('open');
+}
+
+function closeProduct() {
+  document.getElementById('product-overlay').classList.remove('open');
+}
+
+function selectMeal(m) {
+  selMeal = m;
+  ['b','l','d','s'].forEach(x =>
+    document.getElementById('mo-' + x).classList.toggle('selected', x === m)
+  );
+}
+
+function changeGrams(d) {
+  const inp = document.getElementById('gram-inp');
+  inp.value = Math.max(1, (+inp.value || 0) + d);
+  updateMacros();
+}
+
+function updateMacros() {
+  const g = +document.getElementById('gram-inp').value || 0;
+  const r = g / 100;
+  document.getElementById('m-kcal').textContent = Math.round(cur.kcal * r);
+  document.getElementById('m-p').textContent = (cur.p * r).toFixed(1) + 'г';
+  document.getElementById('m-c').textContent = (cur.c * r).toFixed(1) + 'г';
+  document.getElementById('m-f').textContent = (cur.f * r).toFixed(1) + 'г';
+}
+
+function saveFood() {
+  const g = +document.getElementById('gram-inp').value || 0;
+  const r = g / 100;
+  const kcal = Math.round(cur.kcal * r);
+  const p = +(cur.p * r).toFixed(1);
+  const c = +(cur.c * r).toFixed(1);
+  const f = +(cur.f * r).toFixed(1);
+
+  totals.kcal += kcal; totals.p += p; totals.c += c; totals.f += f;
+  mealTotals[selMeal] += kcal;
+
+  const container = document.getElementById('meal-' + selMeal);
+  container.classList.add('open');
+  const row = document.createElement('div');
+  row.className = 'food-row';
+  row.innerHTML = `
+    <div class="food-row-top">
+      <span class="food-row-name">${cur.name} <strong>${g}г</strong></span>
+      <span class="food-row-kcal">${kcal}</span>
+    </div>
+    <div class="food-row-macros">
+      <span class="food-macro-val">${f}</span>
+      <span class="food-macro-val">${c}</span>
+      <span class="food-macro-val">${p}</span>
+    </div>`;
+  container.appendChild(row);
+
+  const hdr = document.getElementById(selMeal + 'h-kcal');
+  if (hdr) hdr.textContent = mealTotals[selMeal] + ' ккал';
+
+  updateDiary();
+  closeProduct();
+  nav('diary');
+}
+
+function updateDiary() {
+  const pct = Math.min(100, Math.round(totals.kcal / goals.kcal * 100));
+  document.getElementById('d-kcal').textContent = totals.kcal;
+  document.getElementById('d-left').textContent = Math.max(0, goals.kcal - totals.kcal);
+  document.getElementById('d-p').textContent = totals.p + 'г';
+  document.getElementById('d-c').textContent = totals.c + 'г';
+  document.getElementById('d-f').textContent = totals.f + 'г';
+  document.getElementById('d-bar').style.width = pct + '%';
+  document.getElementById('d-pb').style.width = Math.min(100, Math.round(totals.p / goals.p * 100)) + '%';
+  document.getElementById('d-cb').style.width = Math.min(100, Math.round(totals.c / goals.c * 100)) + '%';
+  document.getElementById('d-fb').style.width = Math.min(100, Math.round(totals.f / goals.f * 100)) + '%';
+}
+
+updateDiary();
+</script>
+</body>
+</html>
