@@ -68,20 +68,22 @@
       }
     }
 
-    .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
     .screen.active { display: flex; }
 
     .scrollable {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
       padding: 12px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      /* Отступ снизу чтобы контент не прятался под нав-баром */
       padding-bottom: 16px;
     }
     .scrollable::-webkit-scrollbar { display: none; }
+    /* Предотвращаем сжатие карточек — иначе flex будет ужимать вместо скролла */
+    .scrollable > * { flex-shrink: 0; }
 
     /* =====================
        КАРТОЧКИ
@@ -307,11 +309,12 @@
        ===================== */
     .overlay {
       display: none;
-      position: absolute;
+      position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.6);
       z-index: 50;
       align-items: flex-end;
+      justify-content: center;
     }
     .overlay.open { display: flex; }
 
@@ -319,6 +322,7 @@
       background: #1e1e1e;
       border-radius: 16px 16px 0 0;
       width: 100%;
+      max-width: 440px;
       padding: 20px 16px 16px;
       padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     }
@@ -454,24 +458,24 @@
             </div>
           </div>
           <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" id="d-bar" style="width:30%;"></div>
+            <div class="progress-bar-fill" id="d-bar" style="width:0%;"></div>
           </div>
         </div>
         <div class="macro-row">
           <div class="macro-col">
             <div class="lbl">Жиры</div>
-            <div class="val" id="d-f">22г</div>
-            <div class="bar-wrap"><div class="bar" id="d-fb" style="background:var(--color-fat);width:31%;"></div></div>
+            <div class="val" id="d-f">0г</div>
+            <div class="bar-wrap"><div class="bar" id="d-fb" style="background:var(--color-fat);width:0%;"></div></div>
           </div>
           <div class="macro-col">
             <div class="lbl">Углев</div>
-            <div class="val" id="d-c">81г</div>
-            <div class="bar-wrap"><div class="bar" id="d-cb" style="background:var(--color-carbs);width:37%;"></div></div>
+            <div class="val" id="d-c">0г</div>
+            <div class="bar-wrap"><div class="bar" id="d-cb" style="background:var(--color-carbs);width:0%;"></div></div>
           </div>
           <div class="macro-col">
             <div class="lbl">Белок</div>
-            <div class="val" id="d-p">55г</div>
-            <div class="bar-wrap"><div class="bar" id="d-pb" style="background:var(--color-protein);width:37%;"></div></div>
+            <div class="val" id="d-p">0г</div>
+            <div class="bar-wrap"><div class="bar" id="d-pb" style="background:var(--color-protein);width:0%;"></div></div>
           </div>
         </div>
       </div>
@@ -584,7 +588,7 @@
       <span style="font-size:16px;font-weight:500;color:var(--txt);">Сканировать штрихкод</span>
     </div>
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px;">
-      <div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:200px;"></div>
+      <div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;"></div>
       <p id="scan-status" style="font-size:13px;color:var(--muted);text-align:center;min-height:18px;"></p>
       <p style="font-size:12px;color:var(--muted);">EAN-13, EAN-8, UPC-A</p>
       <button onclick="openManualAdd()"
@@ -635,7 +639,8 @@
           style="width:36px;height:36px;border-radius:8px;border:0.5px solid var(--border);
                  background:#2a2a2a;color:var(--txt);font-size:20px;cursor:pointer;
                  display:flex;align-items:center;justify-content:center;">−</button>
-        <input class="gram-input" id="gram-inp" type="number" value="100" min="1" oninput="updateMacros()" style="flex:1;"/>
+        <input class="gram-input" id="gram-inp" type="text" inputmode="decimal" value="100"
+          oninput="updateMacros()" onfocus="this.select()" style="flex:1;"/>
         <button onclick="changeGrams(5)"
           style="width:36px;height:36px;border-radius:8px;border:0.5px solid var(--border);
                  background:#2a2a2a;color:var(--txt);font-size:20px;cursor:pointer;
@@ -921,7 +926,10 @@
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
     document.getElementById('s-' + s).classList.add('active');
     document.getElementById('nav-' + s).classList.add('active');
-    if (s === 'search') switchSearchTab('search');
+    if (s === 'search') {
+      document.getElementById('search-inp').value = '';
+      switchSearchTab('search');
+    }
     if (s === 'scan') startScanner();
     if (s === 'ai') loadAiScreen();
   }
@@ -999,10 +1007,13 @@
     const statusEl = document.getElementById('scan-status');
     statusEl.textContent = 'Запуск камеры...';
     try {
+      const minDim = Math.min(window.innerWidth, window.innerHeight);
+      const boxW = Math.round(Math.min(minDim * 0.75, 260));
+      const boxH = Math.round(boxW * 0.5);
       scanner = new Html5Qrcode('qr-reader');
       await scanner.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 120 } },
+        { fps: 10, qrbox: { width: boxW, height: boxH } },
         onBarcodeScanned,
         () => {}
       );
@@ -1054,7 +1065,6 @@
 
   // ── Поиск ─────────────────────────────────────────────────
   let searchTab = 'search';
-  let searchTimer = null;
 
   function switchSearchTab(tab) {
     searchTab = tab;
@@ -1065,7 +1075,6 @@
   }
 
   function triggerSearch() {
-    clearTimeout(searchTimer);
     const q = document.getElementById('search-inp').value;
     onSearchInput(q);
   }
@@ -1287,7 +1296,7 @@
     document.getElementById('p-name').textContent  = name;
     document.getElementById('p-brand').textContent = brand;
     document.getElementById('gram-inp').value = 100;
-    selectMeal('b');
+    selectMeal(selMeal);
     updateMacros();
     document.getElementById('product-overlay').classList.add('open');
   }
