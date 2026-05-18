@@ -1,4 +1,4 @@
-const CACHE_NAME = 'plate-v1';
+const CACHE_NAME = 'plate-v2';
 // Для GitHub Pages замени на '/имя-репозитория', для локальной разработки оставь ''
 const BASE_PATH = '';
 
@@ -6,14 +6,15 @@ const ASSETS_TO_CACHE = [
   '.',
   'index.html',
   'manifest.json',
-  'icons/icon-192.png',
-  'icons/icon-512.png'
+  'images/icon-192.png',
+  'images/icon-512.png'
 ].map(path => BASE_PATH + '/' + path);
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ASSETS_TO_CACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -25,6 +26,7 @@ self.addEventListener('activate', event => {
           .filter(name => name !== CACHE_NAME)
           .map(name => caches.delete(name))
       ))
+      .then(() => self.clients.claim())
   );
 });
 
