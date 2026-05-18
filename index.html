@@ -662,10 +662,6 @@
           <div class="val" id="m-kcal">82</div>
         </div>
         <div class="macro-cell">
-          <div class="lbl">Белок</div>
-          <div class="val" id="m-p" style="color:var(--color-protein);">8.0г</div>
-        </div>
-        <div class="macro-cell">
           <div class="lbl">Жиры</div>
           <div class="val" id="m-f" style="color:var(--color-fat);">4.8г</div>
         </div>
@@ -673,7 +669,19 @@
           <div class="lbl">Углев</div>
           <div class="val" id="m-c" style="color:var(--color-carbs);">1.9г</div>
         </div>
+        <div class="macro-cell">
+          <div class="lbl">Белок</div>
+          <div class="val" id="m-p" style="color:var(--color-protein);">8.0г</div>
+        </div>
       </div>
+
+      <button id="btn-edit-nutrition" onclick="openEditNutrition()"
+        style="display:none;width:100%;padding:10px;background:none;border:0.5px solid var(--border);
+               border-radius:10px;color:var(--muted);font-size:13px;cursor:pointer;
+               margin-bottom:8px;align-items:center;justify-content:center;gap:6px;">
+        <i class="ti ti-pencil" style="font-size:14px;" aria-hidden="true"></i>
+        Изменить пищевую ценность
+      </button>
 
       <button class="save-btn" onclick="saveFood()">Сохранить</button>
     </div>
@@ -683,7 +691,7 @@
   <div class="overlay" id="manual-overlay" onclick="if(event.target===this)closeManualAdd()">
     <div class="product-sheet">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <span style="font-size:17px;font-weight:500;color:var(--txt);">Новый продукт</span>
+        <span id="manual-title" style="font-size:17px;font-weight:500;color:var(--txt);">Новый продукт</span>
         <button class="btn-icon" onclick="closeManualAdd()">
           <i class="ti ti-x" style="font-size:20px;" aria-hidden="true"></i>
         </button>
@@ -717,7 +725,7 @@
         </div>
       </div>
 
-      <button class="save-btn" onclick="saveManualProduct()">Сохранить продукт</button>
+      <button id="manual-save-btn" class="save-btn" onclick="saveManualProduct()">Сохранить продукт</button>
     </div>
   </div>
 
@@ -753,6 +761,7 @@
   let curProduct = { name:'', brand:'', kcal:0, p:0, c:0, f:0 };
   let selMeal = 'b';
   let editingMealId = null;
+  let editingProductBarcode = null;
 
   // ── Утилиты ───────────────────────────────────────────────
   function todayStr() {
@@ -1249,19 +1258,38 @@
 
   // ── Ручное добавление продукта ─────────────────────────────
   function openManualAdd(mealType) {
+    editingProductBarcode = null;
     ['mp-name','mp-brand','mp-kcal','mp-p','mp-f','mp-c'].forEach(id => {
       const el = document.getElementById(id);
       el.value = '';
       el.style.borderColor = '';
     });
-    if (mealType) {
-      selectMeal(mealType);
-    }
+    if (mealType) selectMeal(mealType);
+    document.getElementById('manual-title').textContent = 'Новый продукт';
+    document.getElementById('manual-save-btn').textContent = 'Сохранить продукт';
     document.getElementById('manual-overlay').classList.add('open');
   }
 
   function closeManualAdd() {
+    editingProductBarcode = null;
     document.getElementById('manual-overlay').classList.remove('open');
+  }
+
+  function openEditNutrition() {
+    if (!curProduct.barcode) return;
+    editingProductBarcode = curProduct.barcode;
+    document.getElementById('mp-name').value = curProduct.name;
+    document.getElementById('mp-brand').value = curProduct.brand || '';
+    document.getElementById('mp-kcal').value = curProduct.kcal;
+    document.getElementById('mp-p').value = curProduct.p;
+    document.getElementById('mp-f').value = curProduct.f;
+    document.getElementById('mp-c').value = curProduct.c;
+    ['mp-name','mp-brand','mp-kcal','mp-p','mp-f','mp-c'].forEach(id => {
+      document.getElementById(id).style.borderColor = '';
+    });
+    document.getElementById('manual-title').textContent = 'Пищевая ценность';
+    document.getElementById('manual-save-btn').textContent = 'Обновить';
+    document.getElementById('manual-overlay').classList.add('open');
   }
 
   async function saveManualProduct() {
@@ -1272,22 +1300,52 @@
     if (!name) { nameEl.style.borderColor = '#e24b4a'; return; }
     if (!kcal) { kcalEl.style.borderColor = '#e24b4a'; return; }
 
-    const product = {
-      barcode:       `local_${Date.now()}`,
-      name,
-      brand:         document.getElementById('mp-brand').value.trim(),
-      kcal_per_100:  kcal,
-      protein_per_100: +document.getElementById('mp-p').value || 0,
-      carbs_per_100:   +document.getElementById('mp-c').value || 0,
-      fat_per_100:     +document.getElementById('mp-f').value || 0,
-      last_used:     Date.now(),
-      use_count:     0
-    };
-    await dbAdd('products', product);
-    closeManualAdd();
-    openProduct(product.name, product.brand, product.kcal_per_100,
-                product.fat_per_100, product.carbs_per_100, product.protein_per_100,
-                product.barcode);
+    const protein = +document.getElementById('mp-p').value || 0;
+    const carbs   = +document.getElementById('mp-c').value || 0;
+    const fat     = +document.getElementById('mp-f').value || 0;
+    const brand   = document.getElementById('mp-brand').value.trim();
+
+    if (editingProductBarcode) {
+      const existing = await dbGet('products', editingProductBarcode);
+      await dbPut('products', {
+        barcode:         editingProductBarcode,
+        name,
+        brand,
+        kcal_per_100:    kcal,
+        protein_per_100: protein,
+        carbs_per_100:   carbs,
+        fat_per_100:     fat,
+        last_used:       existing?.last_used || Date.now(),
+        use_count:       existing?.use_count || 0
+      });
+      curProduct.name  = name;
+      curProduct.brand = brand;
+      curProduct.kcal  = kcal;
+      curProduct.p     = protein;
+      curProduct.c     = carbs;
+      curProduct.f     = fat;
+      document.getElementById('p-name').textContent  = name;
+      document.getElementById('p-brand').textContent = brand;
+      updateMacros();
+      closeManualAdd();
+    } else {
+      const product = {
+        barcode:         `local_${Date.now()}`,
+        name,
+        brand,
+        kcal_per_100:    kcal,
+        protein_per_100: protein,
+        carbs_per_100:   carbs,
+        fat_per_100:     fat,
+        last_used:       Date.now(),
+        use_count:       0
+      };
+      await dbAdd('products', product);
+      closeManualAdd();
+      openProduct(product.name, product.brand, product.kcal_per_100,
+                  product.fat_per_100, product.carbs_per_100, product.protein_per_100,
+                  product.barcode);
+    }
   }
 
   // ── Карточка продукта ─────────────────────────────────────
@@ -1298,6 +1356,8 @@
     document.getElementById('gram-inp').value = 100;
     selectMeal(selMeal);
     updateMacros();
+    const editBtn = document.getElementById('btn-edit-nutrition');
+    editBtn.style.display = barcode ? 'flex' : 'none';
     document.getElementById('product-overlay').classList.add('open');
   }
 
@@ -1324,6 +1384,7 @@
     document.getElementById('gram-inp').value = meal.grams;
     selectMeal(mealKey);
     updateMacros();
+    document.getElementById('btn-edit-nutrition').style.display = 'none';
     document.getElementById('product-overlay').classList.add('open');
   }
 
