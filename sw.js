@@ -1,17 +1,17 @@
-const CACHE_NAME = 'plate-v3';
-const BASE_PATH = '';
+const CACHE_NAME = 'plate-v4';
 
-// HTML никогда не кэшируем — всегда берём свежий из сети
-const ASSETS_TO_CACHE = [
-  'manifest.json',
-  'images/icon-192.png',
-  'images/icon-512.png'
-].map(path => BASE_PATH + '/' + path);
+// Относительные пути — работают и локально и на GitHub Pages
+const PRECACHE = [
+  './index.html',
+  './manifest.json',
+  './images/icon-192.png',
+  './images/icon-512.png',
+];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS_TO_CACHE))
+      .then(cache => cache.addAll(PRECACHE))
       .then(() => self.skipWaiting())
   );
 });
@@ -19,10 +19,8 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(cacheNames => Promise.all(
-        cacheNames
-          .filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
+      .then(names => Promise.all(
+        names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n))
       ))
       .then(() => self.clients.claim())
   );
@@ -34,27 +32,35 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(event.request.url);
 
-  // HTML — только из сети
+  // HTML: network-first + кэшируем для офлайна
   if (url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request)
+        .then(res => {
+          if (res.ok) {
+            caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match(event.request)
+            .then(r => r || caches.match('./index.html'))
+            .then(r => r || caches.match(new Request(self.registration.scope)))
+        )
     );
     return;
   }
 
-  // Статика — сначала кэш, потом сеть
+  // Статика: cache-first, обновляем в фоне
   event.respondWith(
-    caches.match(event.request)
-      .then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
-          if (response.ok) {
-            caches.open(CACHE_NAME)
-              .then(cache => cache.put(event.request, response.clone()));
-          }
-          return response;
-        });
-      })
-      .catch(() => new Response('Offline'))
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(res => {
+        if (res.ok) {
+          caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+        }
+        return res;
+      });
+    }).catch(() => new Response('', { status: 503, statusText: 'Offline' }))
   );
 });

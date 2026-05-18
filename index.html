@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#1a1a1a">
@@ -57,12 +57,14 @@
     }
 
     /* На мобильном — занимаем весь экран */
-    @media (max-width: 430px) {
-      body { padding: 0; align-items: stretch; }
+    @media (max-width: 440px) {
+      body { padding: 0; align-items: stretch; background: var(--bg); }
       .app {
         border-radius: 0;
-        min-height: 100vh;
-        min-height: 100dvh;
+        height: 100dvh;
+        max-width: 100%;
+        /* Dynamic Island / notch */
+        padding-top: env(safe-area-inset-top, 0px);
       }
     }
 
@@ -290,6 +292,15 @@
       cursor: pointer;
     }
     .chips-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ai-user-msg {
+      background: #2a2a2a;
+      border-radius: 16px 16px 4px 16px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--txt);
+      margin-left: 40px;
+    }
 
     /* =====================
        BOTTOM SHEET (карточка добавления)
@@ -372,7 +383,6 @@
     .cal-day.selected { outline: 1.5px solid var(--acc); }
     .cal-day.muted { color: var(--muted); }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
     .spinning { display: inline-block; animation: spin 1s linear infinite; }
 
     /* =====================
@@ -435,12 +445,12 @@
         <div class="summary-top">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
             <div>
-              <span class="kcal-main" id="d-kcal">609</span>
+              <span class="kcal-main" id="d-kcal">0</span>
               <span class="kcal-goal">/ 2000 ккал</span>
             </div>
             <div style="text-align:right;">
               <span style="font-size:12px;color:var(--muted);">осталось</span><br>
-              <span class="kcal-left" id="d-left">1391</span>
+              <span class="kcal-left" id="d-left">2000</span>
             </div>
           </div>
           <div class="progress-bar-wrap">
@@ -474,7 +484,7 @@
             <span class="title">Завтрак</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:13px;color:var(--muted);" id="bh-kcal">609 ккал</span>
+            <span style="font-size:13px;color:var(--muted);" id="bh-kcal"></span>
             <button onclick="event.stopPropagation(); openManualAdd('b')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
               <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
             </button>
@@ -586,56 +596,23 @@
 
   <!-- ==================== ЭКРАН: AI ==================== -->
   <div class="screen" id="s-ai">
-    <div style="padding:12px 14px 0;display:flex;align-items:center;gap:8px;">
+    <div style="padding:12px 14px 0;display:flex;align-items:center;gap:8px;flex-shrink:0;">
       <div style="width:28px;height:28px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;">
         <i class="ti ti-sparkles" style="font-size:14px;color:#111;" aria-hidden="true"></i>
       </div>
       <span style="font-size:16px;font-weight:500;color:var(--txt);">AI нутрициолог</span>
     </div>
-    <div class="scrollable">
-      <div class="ai-message">
-        Белка сегодня <strong style="color:var(--acc);">55г из 150г</strong> — главный пробел.
-        До цели ещё 1391 ккал. На прошлой неделе ты часто ел творог и куриную грудку —
-        добавь на обед, закроет ~60г белка.
-      </div>
-      <div>
-        <p style="font-size:11px;color:var(--muted);margin-bottom:6px;">из твоего арсенала</p>
-        <div class="chips-row">
-          <span class="ai-chip">творог 200г → +34г</span>
-          <span class="ai-chip">куриная грудка → +31г</span>
-          <span class="ai-chip">яйца 3шт → +19г</span>
-        </div>
-      </div>
-      <div class="card" style="padding:12px 14px;">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">сводка дня</p>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <div style="display:flex;justify-content:space-between;font-size:13px;">
-            <span style="color:var(--muted);">Жиры</span>
-            <span style="color:var(--color-fat);">22г / 70г</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;">
-            <span style="color:var(--muted);">Углеводы</span>
-            <span style="color:var(--txt);">81г / 220г</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;">
-            <span style="color:var(--muted);">Белок</span>
-            <span style="color:var(--color-protein);">55г / 150г ⚠️</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;">
-            <span style="color:var(--muted);">Калории</span>
-            <span style="color:var(--acc);">609 / 2000</span>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <input type="text" placeholder="спросить..."
-          style="flex:1;font-size:13px;background:#222;border:0.5px solid var(--border);
-                 color:var(--txt);border-radius:20px;padding:10px 14px;outline:none;"/>
-        <button style="width:40px;height:40px;border-radius:50%;background:var(--acc2);
-                       border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-          <i class="ti ti-send" style="font-size:16px;color:#fff;" aria-hidden="true"></i>
-        </button>
-      </div>
+    <div class="scrollable" id="ai-body"></div>
+    <div style="padding:10px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;flex-shrink:0;" id="ai-input-row">
+      <input type="text" id="ai-inp" placeholder="спросить..."
+        style="flex:1;font-size:13px;background:#222;border:0.5px solid var(--border);
+               color:var(--txt);border-radius:20px;padding:10px 14px;outline:none;"
+        onkeydown="if(event.key==='Enter')sendAiQuestion()"/>
+      <button onclick="sendAiQuestion()"
+        style="width:40px;height:40px;border-radius:50%;background:var(--acc2);border:none;
+               cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-send" style="font-size:16px;color:#fff;" aria-hidden="true"></i>
+      </button>
     </div>
   </div>
 
@@ -774,10 +751,12 @@
 
   // ── Утилиты ───────────────────────────────────────────────
   function todayStr() {
-    return new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
   function fmt1(n) { return +n.toFixed(1); }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   function formatDateLabel(dateStr) {
     const d = new Date(dateStr + 'T12:00:00');
@@ -901,7 +880,7 @@
     row.onclick = () => editMeal(meal);
     row.innerHTML = `
       <div class="food-row-top">
-        <span class="food-row-name">${meal.product_name} <strong>${meal.grams}г</strong></span>
+        <span class="food-row-name">${esc(meal.product_name)} <strong>${meal.grams}г</strong></span>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="food-row-kcal">${meal.kcal}</span>
           <button onclick="event.stopPropagation(); deleteMeal(${meal.id})"
@@ -944,6 +923,7 @@
     document.getElementById('nav-' + s).classList.add('active');
     if (s === 'search') switchSearchTab('search');
     if (s === 'scan') startScanner();
+    if (s === 'ai') loadAiScreen();
   }
 
   function toggleMeal(id) {
@@ -1136,7 +1116,7 @@
     }
     const data = await res.json();
     return (data.products || [])
-      .filter(p => p.product_name && p.nutriments && 'energy-kcal_100g' in p.nutriments)
+      .filter(p => p.code && p.product_name && p.nutriments && 'energy-kcal_100g' in p.nutriments)
       .map(p => ({
         barcode:         p.code,
         name:            p.product_name,
@@ -1208,8 +1188,8 @@
       item.className = 'food-item';
       item.innerHTML = `
         <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
-          <div style="font-size:11px;color:var(--muted);">${p.kcal_per_100} ккал · 100г${p.brand ? ' · ' + p.brand : ''}</div>
+          <div style="font-size:14px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.name)}</div>
+          <div style="font-size:11px;color:var(--muted);">${p.kcal_per_100} ккал · 100г${p.brand ? ' · ' + esc(p.brand) : ''}</div>
         </div>
         <i class="ti ti-${fromApi ? 'cloud-download' : 'arrow-up-right'}"
            style="font-size:16px;color:var(--muted);flex-shrink:0;margin-left:8px;" aria-hidden="true"></i>`;
@@ -1319,15 +1299,15 @@
 
   function editMeal(meal) {
     editingMealId = meal.id;
-    const mealTypeMap = { 'Завтрак': 'b', 'Обед': 'l', 'Ужин': 'd', 'Перекус': 's' };
-    const mealKey = mealTypeMap[meal.meal_type] || 'b';
+    const mealKey = Object.keys(MEAL_TYPES).find(k => MEAL_TYPES[k] === meal.meal_type) || 'b';
+    const scale = meal.grams > 0 ? 100 / meal.grams : 0;
     curProduct = {
       name: meal.product_name,
       brand: '',
-      kcal: meal.kcal * 100 / meal.grams,
-      p: meal.protein * 100 / meal.grams,
-      c: meal.carbs * 100 / meal.grams,
-      f: meal.fat * 100 / meal.grams,
+      kcal: meal.kcal * scale,
+      p: meal.protein * scale,
+      c: meal.carbs * scale,
+      f: meal.fat * scale,
       barcode: null
     };
     document.getElementById('p-name').textContent = meal.product_name;
@@ -1362,6 +1342,7 @@
 
   async function saveFood() {
     const g = +document.getElementById('gram-inp').value || 0;
+    if (g <= 0) return;
     const r = g / 100;
     const mealData = {
       date:         currentDate,
@@ -1401,11 +1382,225 @@
     loadDiary(todayStr());
   });
 
-  // Сервис-воркер подключим на шаге 8 (PWA)
+  // ── AI нутрициолог ────────────────────────────────────────
+  function getGeminiKey() { return localStorage.getItem('gemini_key') || ''; }
+  function setGeminiKey(k) { localStorage.setItem('gemini_key', k.trim()); }
+
+  async function loadAiScreen() {
+    const body = document.getElementById('ai-body');
+    const key = getGeminiKey();
+    const meals = await dbGetByIndex('meals', 'date', currentDate);
+    const t = meals.reduce((a, m) => ({
+      kcal: a.kcal + m.kcal, p: a.p + m.protein,
+      c: a.c + m.carbs, f: a.f + m.fat
+    }), { kcal: 0, p: 0, c: 0, f: 0 });
+
+    const summaryCard = `
+      <div class="card" style="padding:12px 14px;">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">сводка дня</p>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Калории</span>
+            <span style="color:var(--acc);">${Math.round(t.kcal)} / ${GOALS.kcal}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Белок</span>
+            <span style="color:var(--color-protein);">${Math.round(t.p)}г / ${GOALS.p}г</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Жиры</span>
+            <span style="color:var(--color-fat);">${Math.round(t.f)}г / ${GOALS.f}г</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--muted);">Углеводы</span>
+            <span style="color:var(--color-carbs);">${Math.round(t.c)}г / ${GOALS.c}г</span>
+          </div>
+        </div>
+      </div>`;
+
+    if (!key) {
+      body.innerHTML = summaryCard + `
+        <div class="card" style="padding:16px 14px;">
+          <p style="font-size:14px;font-weight:500;color:var(--txt);margin-bottom:4px;">Введи ключ Gemini API</p>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            Получи бесплатно на aistudio.google.com
+          </p>
+          <input id="ai-key-inp" class="search-input" placeholder="AIzaSy..."
+            type="text" style="margin-bottom:10px;border-radius:8px;"/>
+          <button onclick="saveGeminiKey()"
+            style="width:100%;background:var(--acc2);border:none;border-radius:20px;
+                   padding:10px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;">
+            Сохранить ключ
+          </button>
+        </div>`;
+      return;
+    }
+
+    body.innerHTML = summaryCard + `
+      <div id="ai-response"></div>
+      <button id="ai-analyze-btn" onclick="analyzeDay()"
+        style="width:100%;background:var(--acc2);border:none;border-radius:20px;
+               padding:12px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;
+               display:flex;align-items:center;justify-content:center;gap:8px;">
+        <i class="ti ti-sparkles" style="font-size:16px;" aria-hidden="true"></i>
+        Анализировать день
+      </button>`;
+  }
+
+  function saveGeminiKey() {
+    const k = document.getElementById('ai-key-inp').value;
+    if (!k.trim()) return;
+    setGeminiKey(k);
+    loadAiScreen();
+  }
+
+  async function analyzeDay() {
+    const btn = document.getElementById('ai-analyze-btn');
+    const responseEl = document.getElementById('ai-response');
+    btn.disabled = true;
+    const setStatus = txt => {
+      btn.innerHTML = `<i class="ti ti-loader-2" style="font-size:16px;animation:spin 1s linear infinite;" aria-hidden="true"></i> ${txt}`;
+    };
+    setStatus('Думаю...');
+    try {
+      const prompt = await buildAiPrompt();
+      const text = await callGemini(prompt, true, setStatus);
+      renderAiResponse(text, responseEl);
+    } catch(e) {
+      responseEl.innerHTML = `<div class="ai-message" style="color:#e07070;">${e.message}</div>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<i class="ti ti-refresh" style="font-size:16px;" aria-hidden="true"></i> Анализировать снова`;
+  }
+
+  async function buildAiPrompt(userQuestion = null) {
+    const meals = await dbGetByIndex('meals', 'date', currentDate);
+    const MEAL_NAMES = { breakfast: 'Завтрак', lunch: 'Обед', dinner: 'Ужин', snack: 'Перекус' };
+    const byMeal = {};
+    meals.forEach(m => { (byMeal[m.meal_type] = byMeal[m.meal_type] || []).push(m); });
+    let mealsText = '';
+    for (const [type, items] of Object.entries(byMeal)) {
+      mealsText += `${MEAL_NAMES[type] || type}: `;
+      mealsText += items.map(m => `${m.product_name} ${m.grams}г (${Math.round(m.kcal)}ккал)`).join(', ');
+      mealsText += '\n';
+    }
+    if (!mealsText) mealsText = 'Ничего не записано\n';
+
+    const t = meals.reduce((a, m) => ({
+      kcal: a.kcal + m.kcal, p: a.p + m.protein,
+      c: a.c + m.carbs, f: a.f + m.fat
+    }), { kcal: 0, p: 0, c: 0, f: 0 });
+
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const allMeals = await dbGetAll('meals');
+    const todayNames = new Set(meals.map(m => m.product_name.toLowerCase()));
+    const arsenal = [...new Set(
+      allMeals
+        .filter(m => m.date !== currentDate && (m.timestamp || 0) > cutoff)
+        .map(m => m.product_name)
+    )].filter(n => !todayNames.has(n.toLowerCase())).slice(0, 20).join(', ');
+
+    const ctx = `[Цели на день] ${GOALS.kcal}ккал, белок ${GOALS.p}г, жиры ${GOALS.f}г, углеводы ${GOALS.c}г
+
+[Сегодня съедено]
+${mealsText}Итого: ${Math.round(t.kcal)}ккал, белок ${Math.round(t.p)}г, жиры ${Math.round(t.f)}г, углеводы ${Math.round(t.c)}г`;
+
+    if (userQuestion) {
+      return `Ты нутрициолог. Отвечай по-русски, 2-3 предложения, только текст — никакого markdown, звёздочек, списков.\n\n${ctx}\n\n[Вопрос]\n${userQuestion}`;
+    }
+
+    return `Ты нутрициолог. Верни ТОЛЬКО валидный JSON — никакого текста вокруг, никакого markdown.\n\n${ctx}\n\n[Арсенал — продукты за 30 дней, исключая сегодняшние]\n${arsenal || 'нет данных'}\n\nЗадача: оцени питание за день (1-2 предложения), порекомендуй 2-3 продукта из арсенала чтобы закрыть пробелы.\nJSON-схема:\n{"analysis":"строка","chips":["строка","строка"]}`;
+  }
+
+  async function callGemini(prompt, useJson = false, onStatus = null) {
+    const key = getGeminiKey();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`;
+    const genConfig = { temperature: 0.7, maxOutputTokens: 512 };
+    if (useJson) genConfig.responseMimeType = 'application/json';
+    const body = JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: genConfig
+    });
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      if (attempt > 1 && onStatus) onStatus(`Повторяю попытку ${attempt - 1}/2...`);
+      let res;
+      try {
+        res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      } catch(e) {
+        if (attempt < 3) { await new Promise(r => setTimeout(r, 3000)); continue; }
+        throw e;
+      }
+      if ((res.status === 503 || res.status === 429) && attempt < 3) {
+        await new Promise(r => setTimeout(r, 3000 * attempt));
+        continue;
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Ошибка API: ${res.status}`);
+      }
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
+  }
+
+  function renderAiResponse(text, el) {
+    try {
+      const clean = text.replace(/```json\n?|\n?```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      let html = `<div class="ai-message">${parsed.analysis.replace(/</g,'&lt;')}</div>`;
+      if (parsed.chips?.length) {
+        html += `<div>
+          <p style="font-size:11px;color:var(--muted);margin-bottom:6px;">из твоего арсенала</p>
+          <div class="chips-row">
+            ${parsed.chips.map(c => `<span class="ai-chip">${c.replace(/</g,'&lt;')}</span>`).join('')}
+          </div>
+        </div>`;
+      }
+      el.innerHTML = html;
+    } catch(e) {
+      el.innerHTML = `<div class="ai-message">${text.replace(/</g,'&lt;')}</div>`;
+    }
+  }
+
+  async function sendAiQuestion() {
+    const inp = document.getElementById('ai-inp');
+    const q = inp.value.trim();
+    if (!q || !getGeminiKey()) return;
+    inp.value = '';
+    const body = document.getElementById('ai-body');
+
+    const qEl = document.createElement('div');
+    qEl.className = 'ai-user-msg';
+    qEl.textContent = q;
+    body.appendChild(qEl);
+
+    const aEl = document.createElement('div');
+    aEl.className = 'ai-message';
+    aEl.style.opacity = '0.5';
+    const setAelStatus = txt => { aEl.innerHTML = `<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;" aria-hidden="true"></i> ${txt}`; };
+    setAelStatus('Думаю...');
+    body.appendChild(aEl);
+    body.scrollTop = body.scrollHeight;
+
+    try {
+      const prompt = await buildAiPrompt(q);
+      const text = await callGemini(prompt, false, setAelStatus);
+      aEl.style.opacity = '1';
+      aEl.textContent = text;
+    } catch(e) {
+      aEl.style.opacity = '1';
+      aEl.style.color = '#e07070';
+      aEl.textContent = e.message;
+    }
+    body.scrollTop = body.scrollHeight;
+  }
+
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs =>
-      regs.forEach(r => r.unregister())
-    );
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .catch(err => console.warn('SW registration failed:', err));
+    });
   }
 </script>
 </body>
