@@ -127,16 +127,30 @@
        ===================== */
     .meal-header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
       padding: 13px 14px;
       cursor: pointer;
+    }
+    .meal-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .meal-header .title {
       font-size: 15px;
       font-weight: 500;
       color: var(--txt);
     }
+    .meal-header-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 0.5px solid var(--border);
+    }
+    .meal-kcal-num { font-size: 17px; font-weight: 700; color: var(--txt); line-height: 1; }
+    .meal-kcal-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .meal-stat-val { font-size: 14px; font-weight: 600; }
 
     .meal-items {
       border-top: 0.5px solid var(--border);
@@ -150,56 +164,30 @@
     .food-row { padding: 10px 0; border-bottom: 0.5px solid var(--border); }
     .food-row:last-child { border-bottom: none; }
 
-    .food-row-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 4px;
-    }
-    .food-row-name { font-size: 14px; color: var(--txt); }
-    .food-row-name strong { font-weight: 500; }
-    .food-row-kcal { font-size: 13px; color: var(--muted); }
-
-    .food-row-macros {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-    }
-    .food-macro-val { font-size: 14px; font-weight: 500; color: var(--txt); }
+    .food-row-name { font-size: 14px; font-weight: 600; color: var(--txt); }
+    .food-row-kcal { font-size: 13px; font-weight: 500; color: var(--muted); }
+    .food-row-grams { font-size: 13px; color: #4CAF50; margin: 2px 0 5px; }
+    .food-row-macros { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .progress-bar-wrap { height: 4px; background: #333; border-radius: 4px; overflow: hidden; margin: 0 14px 12px; }
+    .progress-bar-fill { height: 100%; background: var(--acc); border-radius: 4px; transition: width .3s; }
+    .food-macro-val { font-size: 13px; font-weight: 500; }
 
     /* =====================
        СУММАРНАЯ КАРТОЧКА ДНЯ
        ===================== */
-    .summary-top { padding: 14px 16px 8px; }
-    .summary-top .kcal-main { font-size: 32px; font-weight: 500; color: var(--txt); }
-    .summary-top .kcal-goal { font-size: 13px; color: var(--muted); margin-left: 4px; }
-    .summary-top .kcal-left { font-size: 18px; font-weight: 500; color: var(--acc); }
-
-    .progress-bar-wrap {
-      height: 5px;
-      background: #333;
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 8px 0;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      background: var(--acc);
-      border-radius: 4px;
-      transition: width .3s;
-    }
-
-    .macro-row {
+    .summary-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      border-top: 0.5px solid var(--border);
+      grid-template-columns: repeat(4, 1fr);
+      padding: 12px 0;
     }
-    .macro-col { padding: 12px 14px; border-right: 0.5px solid var(--border); }
-    .macro-col:last-child { border-right: none; }
-    .macro-col .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .macro-col .val { font-size: 18px; font-weight: 500; color: var(--txt); }
-    .macro-col .bar-wrap { height: 3px; background: #333; border-radius: 3px; margin-top: 6px; }
-    .macro-col .bar { height: 100%; border-radius: 3px; }
+    .summary-col {
+      text-align: center;
+      padding: 6px 4px;
+      border-right: 0.5px solid var(--border);
+    }
+    .summary-col:last-child { border-right: none; }
+    .summary-col .s-val { font-size: 17px; font-weight: 600; }
+    .summary-col .s-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
     /* =====================
        ПОИСК
@@ -446,52 +434,51 @@
 
       <!-- Суммарная карточка -->
       <div class="card">
-        <div class="summary-top">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-            <div>
-              <span class="kcal-main" id="d-kcal">0</span>
-              <span class="kcal-goal">/ 2000 ккал</span>
-            </div>
-            <div style="text-align:right;">
-              <span style="font-size:12px;color:var(--muted);">осталось</span><br>
-              <span class="kcal-left" id="d-left">2000</span>
-            </div>
+        <div class="summary-grid">
+          <div class="summary-col">
+            <div class="s-val" id="d-f" style="color:var(--color-fat);">0г</div>
+            <div class="s-lbl">Жиры</div>
           </div>
-          <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" id="d-bar" style="width:0%;"></div>
+          <div class="summary-col">
+            <div class="s-val" id="d-c" style="color:var(--color-carbs);">0г</div>
+            <div class="s-lbl">Углев</div>
+          </div>
+          <div class="summary-col">
+            <div class="s-val" id="d-p" style="color:var(--color-protein);">0г</div>
+            <div class="s-lbl">Белок</div>
+          </div>
+          <div class="summary-col">
+            <div class="s-val" id="d-kcal" style="font-size:24px;color:#ffffff;">0</div>
+            <div class="s-lbl">Калории</div>
           </div>
         </div>
-        <div class="macro-row">
-          <div class="macro-col">
-            <div class="lbl">Жиры</div>
-            <div class="val" id="d-f">0г</div>
-            <div class="bar-wrap"><div class="bar" id="d-fb" style="background:var(--color-fat);width:0%;"></div></div>
-          </div>
-          <div class="macro-col">
-            <div class="lbl">Углев</div>
-            <div class="val" id="d-c">0г</div>
-            <div class="bar-wrap"><div class="bar" id="d-cb" style="background:var(--color-carbs);width:0%;"></div></div>
-          </div>
-          <div class="macro-col">
-            <div class="lbl">Белок</div>
-            <div class="val" id="d-p">0г</div>
-            <div class="bar-wrap"><div class="bar" id="d-pb" style="background:var(--color-protein);width:0%;"></div></div>
-          </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="d-bar" style="width:0%;"></div>
         </div>
       </div>
 
       <!-- Завтрак -->
       <div class="card">
         <div class="meal-header" onclick="toggleMeal('b')">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:18px;">🌅</span>
-            <span class="title">Завтрак</span>
+          <div class="meal-header-top">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">🌅</span>
+              <span class="title">Завтрак</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div id="bh-kcal-block" style="display:none;text-align:right;">
+                <div class="meal-kcal-num" id="bh-kcal"></div>
+                <div class="meal-kcal-lbl">Калории</div>
+              </div>
+              <button onclick="event.stopPropagation(); openManualAdd('b')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
+                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:13px;color:var(--muted);" id="bh-kcal"></span>
-            <button onclick="event.stopPropagation(); openManualAdd('b')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-              <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-            </button>
+          <div class="meal-header-stats" id="bh-stats" style="display:none;">
+            <div class="meal-stat-val" id="bh-f" style="color:var(--color-fat);"></div>
+            <div class="meal-stat-val" id="bh-c" style="color:var(--color-carbs);"></div>
+            <div class="meal-stat-val" id="bh-p" style="color:var(--color-protein);"></div>
           </div>
         </div>
         <div class="meal-items" id="meal-b"></div>
@@ -500,15 +487,25 @@
       <!-- Обед -->
       <div class="card">
         <div class="meal-header" onclick="toggleMeal('l')">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:18px;">☀️</span>
-            <span class="title">Обед</span>
+          <div class="meal-header-top">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">☀️</span>
+              <span class="title">Обед</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div id="lh-kcal-block" style="display:none;text-align:right;">
+                <div class="meal-kcal-num" id="lh-kcal"></div>
+                <div class="meal-kcal-lbl">Калории</div>
+              </div>
+              <button onclick="event.stopPropagation(); openManualAdd('l')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
+                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:13px;color:var(--muted);" id="lh-kcal"></span>
-            <button onclick="event.stopPropagation(); openManualAdd('l')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-              <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-            </button>
+          <div class="meal-header-stats" id="lh-stats" style="display:none;">
+            <div class="meal-stat-val" id="lh-f" style="color:var(--color-fat);"></div>
+            <div class="meal-stat-val" id="lh-c" style="color:var(--color-carbs);"></div>
+            <div class="meal-stat-val" id="lh-p" style="color:var(--color-protein);"></div>
           </div>
         </div>
         <div class="meal-items" id="meal-l"></div>
@@ -517,15 +514,25 @@
       <!-- Ужин -->
       <div class="card">
         <div class="meal-header" onclick="toggleMeal('d')">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:18px;">🌆</span>
-            <span class="title">Ужин</span>
+          <div class="meal-header-top">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">🌆</span>
+              <span class="title">Ужин</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div id="dh-kcal-block" style="display:none;text-align:right;">
+                <div class="meal-kcal-num" id="dh-kcal"></div>
+                <div class="meal-kcal-lbl">Калории</div>
+              </div>
+              <button onclick="event.stopPropagation(); openManualAdd('d')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
+                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:13px;color:var(--muted);" id="dh-kcal"></span>
-            <button onclick="event.stopPropagation(); openManualAdd('d')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-              <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-            </button>
+          <div class="meal-header-stats" id="dh-stats" style="display:none;">
+            <div class="meal-stat-val" id="dh-f" style="color:var(--color-fat);"></div>
+            <div class="meal-stat-val" id="dh-c" style="color:var(--color-carbs);"></div>
+            <div class="meal-stat-val" id="dh-p" style="color:var(--color-protein);"></div>
           </div>
         </div>
         <div class="meal-items" id="meal-d"></div>
@@ -534,15 +541,25 @@
       <!-- Перекус -->
       <div class="card">
         <div class="meal-header" onclick="toggleMeal('s')">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:18px;">🌙</span>
-            <span class="title">Перекус</span>
+          <div class="meal-header-top">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">🌙</span>
+              <span class="title">Перекус</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div id="sh-kcal-block" style="display:none;text-align:right;">
+                <div class="meal-kcal-num" id="sh-kcal"></div>
+                <div class="meal-kcal-lbl">Калории</div>
+              </div>
+              <button onclick="event.stopPropagation(); openManualAdd('s')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
+                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:13px;color:var(--muted);" id="sh-kcal"></span>
-            <button onclick="event.stopPropagation(); openManualAdd('s')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-              <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-            </button>
+          <div class="meal-header-stats" id="sh-stats" style="display:none;">
+            <div class="meal-stat-val" id="sh-f" style="color:var(--color-fat);"></div>
+            <div class="meal-stat-val" id="sh-c" style="color:var(--color-carbs);"></div>
+            <div class="meal-stat-val" id="sh-p" style="color:var(--color-protein);"></div>
           </div>
         </div>
         <div class="meal-items" id="meal-s"></div>
@@ -659,19 +676,19 @@
       <div class="macro-grid">
         <div class="macro-cell">
           <div class="lbl">Калории</div>
-          <div class="val" id="m-kcal">82</div>
+          <div class="val" id="m-kcal">0</div>
         </div>
         <div class="macro-cell">
           <div class="lbl">Жиры</div>
-          <div class="val" id="m-f" style="color:var(--color-fat);">4.8г</div>
+          <div class="val" id="m-f" style="color:var(--color-fat);">0г</div>
         </div>
         <div class="macro-cell">
           <div class="lbl">Углев</div>
-          <div class="val" id="m-c" style="color:var(--color-carbs);">1.9г</div>
+          <div class="val" id="m-c" style="color:var(--color-carbs);">0г</div>
         </div>
         <div class="macro-cell">
           <div class="lbl">Белок</div>
-          <div class="val" id="m-p" style="color:var(--color-protein);">8.0г</div>
+          <div class="val" id="m-p" style="color:var(--color-protein);">0г</div>
         </div>
       </div>
 
@@ -726,6 +743,13 @@
       </div>
 
       <button id="manual-save-btn" class="save-btn" onclick="saveManualProduct()">Сохранить продукт</button>
+      <button onclick="closeManualAdd(); nav('scan')"
+        style="width:100%;padding:14px;background:#2a2a2a;border:0.5px solid var(--border);
+               border-radius:12px;color:var(--muted);font-size:16px;font-weight:500;cursor:pointer;
+               margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <i class="ti ti-barcode" style="font-size:18px;" aria-hidden="true"></i>
+        Сканировать штрихкод
+      </button>
     </div>
   </div>
 
@@ -749,7 +773,7 @@
 
 <script>
   // ── Конфиг ────────────────────────────────────────────────
-  const GOALS = { kcal: 2000, p: 130, c: 200, f: 60 };
+  const GOALS = { kcal: 2000, p: 150, c: 200, f: 60 };
   const MEAL_TYPES = { b: 'breakfast', l: 'lunch', d: 'dinner', s: 'snack' };
   const MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь',
                        'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
@@ -857,30 +881,40 @@
     ['b','l','d','s'].forEach(m => {
       document.getElementById('meal-' + m).innerHTML = '';
       document.getElementById('meal-' + m).classList.remove('open');
-      const hdr = document.getElementById(m + 'h-kcal');
-      if (hdr) hdr.textContent = '';
+      document.getElementById(m + 'h-kcal-block').style.display = 'none';
+      document.getElementById(m + 'h-kcal').textContent = '';
+      document.getElementById(m + 'h-stats').style.display = 'none';
+      ['f','c','p'].forEach(k => { document.getElementById(m + 'h-' + k).textContent = ''; });
     });
 
     const meals = await dbGetByIndex('meals', 'date', date);
-    const mealKcal = { b:0, l:0, d:0, s:0 };
-    const totals   = { kcal:0, p:0, c:0, f:0 };
+    const mealKcal   = { b:0, l:0, d:0, s:0 };
+    const mealMacros = { b:{f:0,c:0,p:0}, l:{f:0,c:0,p:0}, d:{f:0,c:0,p:0}, s:{f:0,c:0,p:0} };
+    const totals     = { kcal:0, p:0, c:0, f:0 };
 
     meals.forEach(meal => {
       const key = Object.keys(MEAL_TYPES).find(k => MEAL_TYPES[k] === meal.meal_type);
       if (!key) return;
-      mealKcal[key] += meal.kcal;
-      totals.kcal   += meal.kcal;
-      totals.p      += meal.protein;
-      totals.c      += meal.carbs;
-      totals.f      += meal.fat;
+      mealKcal[key]      += meal.kcal;
+      mealMacros[key].f  += meal.fat;
+      mealMacros[key].c  += meal.carbs;
+      mealMacros[key].p  += meal.protein;
+      totals.kcal        += meal.kcal;
+      totals.p           += meal.protein;
+      totals.c           += meal.carbs;
+      totals.f           += meal.fat;
       renderMealRow(key, meal);
     });
 
     ['b','l','d','s'].forEach(m => {
       if (mealKcal[m] > 0) {
         document.getElementById('meal-' + m).classList.add('open');
-        document.getElementById(m + 'h-kcal').textContent =
-          Math.round(mealKcal[m]) + ' ккал';
+        document.getElementById(m + 'h-kcal-block').style.display = 'block';
+        document.getElementById(m + 'h-kcal').textContent = Math.round(mealKcal[m]);
+        document.getElementById(m + 'h-stats').style.display = 'grid';
+        document.getElementById(m + 'h-f').textContent = fmt1(mealMacros[m].f) + 'г';
+        document.getElementById(m + 'h-c').textContent = fmt1(mealMacros[m].c) + 'г';
+        document.getElementById(m + 'h-p').textContent = fmt1(mealMacros[m].p) + 'г';
       }
     });
 
@@ -893,19 +927,20 @@
     row.style.cursor = 'pointer';
     row.onclick = () => editMeal(meal);
     row.innerHTML = `
-      <div class="food-row-top">
-        <span class="food-row-name">${esc(meal.product_name)} <strong>${meal.grams}г</strong></span>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="food-row-kcal">${meal.kcal}</span>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;">
+        <span class="food-row-name">${esc(meal.product_name)}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="food-row-kcal">${meal.kcal} ккал</span>
           <button onclick="event.stopPropagation(); deleteMeal(${meal.id})"
             style="background:none;border:none;cursor:pointer;color:var(--muted);
                    font-size:18px;line-height:1;padding:0;">×</button>
         </div>
       </div>
+      <div class="food-row-grams">${meal.grams}г</div>
       <div class="food-row-macros">
-        <span class="food-macro-val" style="color:var(--color-fat)">${meal.fat}</span>
-        <span class="food-macro-val" style="color:var(--color-carbs)">${meal.carbs}</span>
-        <span class="food-macro-val" style="color:var(--color-protein)">${meal.protein}</span>
+        <span class="food-macro-val" style="color:var(--color-fat)">${meal.fat}г</span>
+        <span class="food-macro-val" style="color:var(--color-carbs)">${meal.carbs}г</span>
+        <span class="food-macro-val" style="color:var(--color-protein)">${meal.protein}г</span>
       </div>`;
     document.getElementById('meal-' + mealKey).appendChild(row);
   }
@@ -916,16 +951,11 @@
   }
 
   function updateSummaryCard(t) {
-    const pct = Math.min(100, Math.round(t.kcal / GOALS.kcal * 100));
     document.getElementById('d-kcal').textContent = Math.round(t.kcal);
-    document.getElementById('d-left').textContent = Math.max(0, GOALS.kcal - Math.round(t.kcal));
     document.getElementById('d-f').textContent  = fmt1(t.f) + 'г';
     document.getElementById('d-c').textContent  = fmt1(t.c) + 'г';
     document.getElementById('d-p').textContent  = fmt1(t.p) + 'г';
-    document.getElementById('d-bar').style.width  = pct + '%';
-    document.getElementById('d-pb').style.width = Math.min(100, Math.round(t.p / GOALS.p * 100)) + '%';
-    document.getElementById('d-cb').style.width = Math.min(100, Math.round(t.c / GOALS.c * 100)) + '%';
-    document.getElementById('d-fb').style.width = Math.min(100, Math.round(t.f / GOALS.f * 100)) + '%';
+    document.getElementById('d-bar').style.width = Math.min(100, Math.round(t.kcal / GOALS.kcal * 100)) + '%';
   }
 
   // ── Навигация ─────────────────────────────────────────────
@@ -1204,16 +1234,18 @@
     products.forEach(p => {
       const item = document.createElement('div');
       item.className = 'food-item';
+      const portionG = p.last_grams || 100;
+      const portionKcal = Math.round(p.kcal_per_100 * portionG / 100);
       item.innerHTML = `
         <div style="flex:1;min-width:0;">
           <div style="font-size:14px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.name)}</div>
-          <div style="font-size:11px;color:var(--muted);">${p.kcal_per_100} ккал · 100г${p.brand ? ' · ' + esc(p.brand) : ''}</div>
+          <div style="font-size:11px;color:var(--muted);">${portionKcal} ккал · ${portionG}г${p.brand ? ' · ' + esc(p.brand) : ''}</div>
         </div>
         <i class="ti ti-${fromApi ? 'cloud-download' : 'arrow-up-right'}"
            style="font-size:16px;color:var(--muted);flex-shrink:0;margin-left:8px;" aria-hidden="true"></i>`;
       item.onclick = () => fromApi
         ? saveApiProduct(p)
-        : openProduct(p.name, p.brand||'', p.kcal_per_100, p.fat_per_100, p.carbs_per_100, p.protein_per_100, p.barcode);
+        : openProduct(p.name, p.brand||'', p.kcal_per_100, p.fat_per_100, p.carbs_per_100, p.protein_per_100, p.barcode, portionG);
       card.appendChild(item);
     });
     return card;
@@ -1234,7 +1266,8 @@
         use_count:       0
       });
     }
-    openProduct(p.name, p.brand||'', p.kcal_per_100, p.fat_per_100, p.carbs_per_100, p.protein_per_100, p.barcode);
+    const saved = await dbGet('products', p.barcode);
+    openProduct(p.name, p.brand||'', p.kcal_per_100, p.fat_per_100, p.carbs_per_100, p.protein_per_100, p.barcode, saved?.last_grams || 100);
   }
 
   async function loadRecentProducts() {
@@ -1316,7 +1349,8 @@
         carbs_per_100:   carbs,
         fat_per_100:     fat,
         last_used:       existing?.last_used || Date.now(),
-        use_count:       existing?.use_count || 0
+        use_count:       existing?.use_count || 0,
+        last_grams:      existing?.last_grams
       });
       curProduct.name  = name;
       curProduct.brand = brand;
@@ -1349,11 +1383,11 @@
   }
 
   // ── Карточка продукта ─────────────────────────────────────
-  function openProduct(name, brand, kcal, f, c, p, barcode) {
+  function openProduct(name, brand, kcal, f, c, p, barcode, defaultGrams = 100) {
     curProduct = { name, brand, kcal:+kcal, p:+p, c:+c, f:+f, barcode: barcode || null };
     document.getElementById('p-name').textContent  = name;
     document.getElementById('p-brand').textContent = brand;
-    document.getElementById('gram-inp').value = 100;
+    document.getElementById('gram-inp').value = defaultGrams;
     selectMeal(selMeal);
     updateMacros();
     const editBtn = document.getElementById('btn-edit-nutrition');
@@ -1435,8 +1469,9 @@
     if (curProduct.barcode) {
       dbGet('products', curProduct.barcode).then(existing => {
         if (existing) {
-          existing.last_used = Date.now();
-          existing.use_count = (existing.use_count || 0) + 1;
+          existing.last_used  = Date.now();
+          existing.use_count  = (existing.use_count || 0) + 1;
+          existing.last_grams = g;
           dbPut('products', existing);
         }
       });
@@ -1564,11 +1599,21 @@
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const allMeals = await dbGetAll('meals');
     const todayNames = new Set(meals.map(m => m.product_name.toLowerCase()));
-    const arsenal = [...new Set(
-      allMeals
-        .filter(m => m.date !== currentDate && (m.timestamp || 0) > cutoff)
-        .map(m => m.product_name)
-    )].filter(n => !todayNames.has(n.toLowerCase())).slice(0, 20).join(', ');
+    const freq = {};
+    allMeals
+      .filter(m => m.date !== currentDate && (m.timestamp || 0) > cutoff)
+      .forEach(m => {
+        const key = m.product_name.toLowerCase();
+        if (!freq[key]) freq[key] = { name: m.product_name, count: 0, totalG: 0 };
+        freq[key].count++;
+        freq[key].totalG += (m.grams || 0);
+      });
+    const arsenal = Object.values(freq)
+      .filter(p => !todayNames.has(p.name.toLowerCase()))
+      .sort((a, b) => b.count - a.count || b.totalG - a.totalG)
+      .slice(0, 25)
+      .map(p => `${p.name} (×${p.count})`)
+      .join(', ');
 
     const ctx = `[Цели на день] ${GOALS.kcal}ккал, белок ${GOALS.p}г, жиры ${GOALS.f}г, углеводы ${GOALS.c}г
 
@@ -1579,7 +1624,7 @@ ${mealsText}Итого: ${Math.round(t.kcal)}ккал, белок ${Math.round(t
       return `Ты нутрициолог. Отвечай по-русски, 2-3 предложения, только текст — никакого markdown, звёздочек, списков.\n\n${ctx}\n\n[Вопрос]\n${userQuestion}`;
     }
 
-    return `Ты нутрициолог. Верни ТОЛЬКО валидный JSON — никакого текста вокруг, никакого markdown.\n\n${ctx}\n\n[Арсенал — продукты за 30 дней, исключая сегодняшние]\n${arsenal || 'нет данных'}\n\nЗадача: оцени питание за день (1-2 предложения), порекомендуй 2-3 продукта из арсенала чтобы закрыть пробелы.\nJSON-схема:\n{"analysis":"строка","chips":["строка","строка"]}`;
+    return `Ты нутрициолог. Верни ТОЛЬКО валидный JSON — никакого текста вокруг, никакого markdown.\n\n${ctx}\n\n[Арсенал — продукты за 30 дней, отсортированы по частоте употребления, исключая сегодняшние]\n${arsenal || 'нет данных'}\n\nЗадача: оцени питание за день (1-2 предложения). Порекомендуй 4-5 продуктов из арсенала чтобы закрыть пробелы по белку, жирам или углеводам. Выбирай продукты которые чаще всего встречаются в арсенале (большее число в скобках = приоритет). ОБЯЗАТЕЛЬНО верни ровно 4-5 чипов.\nJSON-схема:\n{"analysis":"строка","chips":["строка","строка","строка","строка"]}`;
   }
 
   async function callGemini(prompt, useJson = false, onStatus = null) {
