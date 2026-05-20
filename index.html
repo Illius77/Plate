@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#1a1a1a">
+  <meta name="theme-color" content="#f2ede6">
   <title>Plate — трекер питания</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="images/icon-192.png">
@@ -14,387 +14,300 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root {
-      --bg: #1a1a1a;
-      --card: #252525;
-      --border: #333;
-      --txt: #f0f0f0;
-      --muted: #888;
-      --acc: #a8e063;
-      --acc2: #6db33f;
-      --ai-bord: #2d4a2d;
-      --color-protein: #40E0D0;
-      --color-carbs: #378ADD;
-      --color-fat: #b63e26;
+      --bg: #f2ede6;
+      --bg-outer: #ddd8d0;
+      --card: #ffffff;
+      --border: #e0d8cc;
+      --txt: #1e1810;
+      --muted: #9a9082;
+      --txt-light: #b0a090;
+      --acc: #3d5c35;
+      --acc2: #8ab870;
+      --green-pale: #e0ecd4;
+      --green-hint: #9cc870;
+      --green-bg: #e8f0e0;
+      --color-fat: #d4956a;
+      --color-carbs: #8ab870;
+      --color-protein: #7090c0;
+      --breakfast-bg: #fdf6e8; --breakfast-icon: #fde8b8; --breakfast-sub: #a07830;
+      --lunch-bg: #e8f4e8;    --lunch-icon: #c8e8b8;    --lunch-sub: #2a6030;
+      --dinner-bg: #e8eef8;   --dinner-icon: #c0d0f0;   --dinner-sub: #6070a0;
+      --snack-bg: #f4e8f4;    --snack-icon: #e0c0e8;    --snack-sub: #806090;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #111;
+      background: var(--bg-outer);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      /* На десктопе — центрируем как в референсе */
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 20px;
+      display: flex; justify-content: center; align-items: flex-start;
+      min-height: 100vh; padding: 20px;
     }
-
-    /* =====================
-       ОБОЛОЧКА ПРИЛОЖЕНИЯ
-       ===================== */
     .app {
-      background: var(--bg);
-      border-radius: 16px;
-      max-width: 390px;
-      width: 100%;
-      overflow: hidden;
-      position: relative;
-      /* Минимальная высота для десктопа */
-      min-height: 720px;
-      display: flex;
-      flex-direction: column;
+      background: var(--bg); border-radius: 32px; max-width: 375px; width: 100%;
+      overflow: hidden; position: relative; min-height: 720px;
+      display: flex; flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.18);
     }
-
-    /* На мобильном — занимаем весь экран */
     @media (max-width: 440px) {
       body { padding: 0; align-items: stretch; background: var(--bg); }
-      .app {
-        border-radius: 0;
-        height: 100dvh;
-        max-width: 100%;
-        /* Dynamic Island / notch */
-        padding-top: env(safe-area-inset-top, 0px);
-      }
+      .app { border-radius: 0; height: 100dvh; max-width: 100%;
+             padding-top: env(safe-area-inset-top, 0px); box-shadow: none; }
     }
 
     .screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
     .screen.active { display: flex; }
-
     .scrollable {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-bottom: 16px;
+      flex: 1; min-height: 0; overflow-y: auto;
+      display: flex; flex-direction: column; padding-bottom: 20px;
     }
     .scrollable::-webkit-scrollbar { display: none; }
-    /* Предотвращаем сжатие карточек — иначе flex будет ужимать вместо скролла */
     .scrollable > * { flex-shrink: 0; }
+    .card { background: var(--card); border-radius: 16px; overflow: hidden; }
 
-    /* =====================
-       КАРТОЧКИ
-       ===================== */
-    .card {
-      background: var(--card);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    /* =====================
-       НИЖНЯЯ НАВИГАЦИЯ
-       ===================== */
+    /* ── НАВИГАЦИЯ ── */
     .bottom-nav {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border-top: 0.5px solid var(--border);
-      background: var(--bg);
-      /* Safe area для iPhone с чёлкой */
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      flex-shrink: 0;
+      display: flex; gap: 6px;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: var(--bg); border-top: 0.5px solid var(--border); flex-shrink: 0;
     }
-
     .nav-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      padding: 10px 0;
-      cursor: pointer;
-      border: none;
-      background: none;
-      color: var(--muted);
-      font-size: 10px;
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 9px 0; cursor: pointer; border: none; background: none;
+      color: var(--muted); font-size: 10px; font-weight: 500; border-radius: 18px;
+      transition: all 0.2s;
     }
-    .nav-btn i { font-size: 20px; }
-    .nav-btn.active { color: var(--acc); }
+    .nav-btn i { font-size: 22px; }
+    .nav-btn.active { background: var(--green-pale); color: var(--acc); font-weight: 700; }
 
-    /* =====================
-       СЕКЦИИ ПРИЁМОВ ПИЩИ
-       ===================== */
-    .meal-header {
-      display: flex;
-      flex-direction: column;
-      padding: 13px 14px;
-      cursor: pointer;
+    /* ── WEEK STRIP ── */
+    .week-strip {
+      display: flex; gap: 4px; padding: 8px 20px 4px; overflow-x: auto; flex-shrink: 0;
     }
-    .meal-header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .week-strip::-webkit-scrollbar { display: none; }
+    .day-pill {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 9px 8px; border-radius: 22px; cursor: pointer; min-width: 42px;
+      transition: all 0.2s;
     }
-    .meal-header .title {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--txt);
-    }
-    .meal-header-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 0.5px solid var(--border);
-    }
-    .meal-kcal-num { font-size: 17px; font-weight: 700; color: var(--txt); line-height: 1; }
-    .meal-kcal-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .meal-stat-val { font-size: 14px; font-weight: 600; }
+    .day-pill .dp-dow { font-size: 10px; color: var(--muted); font-weight: 500; }
+    .day-pill .dp-num { font-size: 16px; font-weight: 700; color: var(--txt); }
+    .day-pill .dp-dot { width: 5px; height: 5px; border-radius: 50%; background: #e0d8cc; }
+    .day-pill.has-data .dp-dot { background: #b0c890; }
+    .day-pill.active { background: var(--acc); }
+    .day-pill.active .dp-dow { color: #9cc870; }
+    .day-pill.active .dp-num { color: #fff; }
+    .day-pill.active .dp-dot { background: #9cc870; }
 
-    .meal-items {
-      border-top: 0.5px solid var(--border);
-      padding: 8px 14px;
-      display: none;
-      flex-direction: column;
-      gap: 0;
+    /* ── RING CARD ── */
+    .ring-card {
+      background: var(--card); border-radius: 26px; padding: 20px;
+      display: flex; gap: 16px; align-items: center; margin: 8px 20px 10px;
     }
+    .ring-macros { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .ring-macro-row { display: flex; flex-direction: column; gap: 3px; }
+    .ring-macro-top { display: flex; align-items: center; gap: 6px; }
+    .ring-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .ring-macro-label { font-size: 12px; color: var(--muted); flex: 1; }
+    .ring-macro-val { font-size: 13px; font-weight: 700; color: var(--txt); }
+    .ring-bar-bg { height: 4px; background: #f0ebe3; border-radius: 4px; }
+    .ring-bar-fill { height: 100%; border-radius: 4px; transition: width .3s; }
+
+    /* ── QUICK STATS ── */
+    .quick-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 20px 12px; }
+    .qs-block { border-radius: 22px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+    .qs-green { background: var(--acc); }
+    .qs-white { background: var(--card); }
+    .qs-icon-wrap {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .qs-green .qs-icon-wrap { background: rgba(255,255,255,0.15); }
+    .qs-white .qs-icon-wrap { background: var(--green-bg); }
+    .qs-num { font-size: 18px; font-weight: 800; line-height: 1.1; }
+    .qs-green .qs-num { color: #c8e8a0; }
+    .qs-white .qs-num { color: var(--acc); }
+    .qs-lbl { font-size: 11px; margin-top: 1px; }
+    .qs-green .qs-lbl { color: #9cc870; }
+    .qs-white .qs-lbl { color: var(--muted); }
+
+    /* ── AI STRIP ── */
+    .ai-strip {
+      margin: 0 20px 14px; background: var(--acc); border-radius: 22px;
+      padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer;
+    }
+    .ai-strip-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .ai-strip-text { flex: 1; }
+    .ai-strip-hint { font-size: 11px; color: #9cc870; margin-bottom: 2px; }
+    .ai-strip-msg { font-size: 13px; color: #e8f8d8; }
+
+    /* ── MEAL CARDS ── */
+    .meals-label {
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      padding: 2px 20px 8px;
+    }
+    .meal-card { border-radius: 22px; overflow: hidden; margin: 0 20px 10px; cursor: pointer; }
+    .meal-card-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+    .meal-icon-wrap {
+      width: 44px; height: 44px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .meal-card-info { flex: 1; min-width: 0; }
+    .meal-card-name { font-size: 16px; font-weight: 700; color: #1e1810; }
+    .meal-card-sub { font-size: 12px; margin-top: 2px; }
+    .meal-card-add-btn {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px; flex-shrink: 0; color: #1e1810;
+    }
+    .meal-card-stats {
+      display: none; grid-template-columns: repeat(3, 1fr);
+      padding: 2px 16px 10px;
+    }
+    .meal-card-stats.visible { display: grid; }
+    .meal-stat-val { font-size: 13px; font-weight: 600; }
+
+    .meal-items { padding: 0 16px 12px; display: none; flex-direction: column; }
     .meal-items.open { display: flex; }
-
-    .food-row { padding: 10px 0; border-bottom: 0.5px solid var(--border); }
-    .food-row:last-child { border-bottom: none; }
-
-    .food-row-name { font-size: 14px; font-weight: 600; color: var(--txt); }
-    .food-row-kcal { font-size: 13px; font-weight: 500; color: var(--muted); }
-    .food-row-grams { font-size: 13px; color: #4CAF50; margin: 2px 0 5px; }
+    .food-row { padding: 10px 0; border-top: 0.5px solid rgba(0,0,0,0.06); }
+    .food-row:first-child { border-top: none; }
+    .food-row-name { font-size: 13px; font-weight: 600; color: #2a1f10; }
+    .food-row-kcal { font-size: 13px; font-weight: 700; color: var(--acc); }
+    .food-row-grams { font-size: 11px; color: var(--muted); margin: 2px 0 5px; }
     .food-row-macros { display: grid; grid-template-columns: repeat(3, 1fr); }
-    .progress-bar-wrap { height: 4px; background: #333; border-radius: 4px; overflow: hidden; margin: 0 14px 12px; }
-    .progress-bar-fill { height: 100%; background: var(--acc); border-radius: 4px; transition: width .3s; }
-    .food-macro-val { font-size: 13px; font-weight: 500; }
+    .food-macro-val { font-size: 12px; font-weight: 500; }
 
-    /* =====================
-       СУММАРНАЯ КАРТОЧКА ДНЯ
-       ===================== */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      padding: 12px 0;
-    }
-    .summary-col {
-      text-align: center;
-      padding: 6px 4px;
-      border-right: 0.5px solid var(--border);
-    }
-    .summary-col:last-child { border-right: none; }
-    .summary-col .s-val { font-size: 17px; font-weight: 600; }
-    .summary-col .s-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
-
-    /* =====================
-       ПОИСК
-       ===================== */
+    /* ── ПОИСК ── */
     .search-input {
-      width: 100%;
-      background: #2a2a2a;
-      border: 0.5px solid var(--border);
-      border-radius: 20px;
-      padding: 10px 16px;
-      color: var(--txt);
-      font-size: 14px;
-      outline: none;
+      width: 100%; background: var(--card); border: 0.5px solid var(--border);
+      border-radius: 20px; padding: 12px 16px; color: var(--txt);
+      font-size: 14px; outline: none;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
     }
     .search-input::placeholder { color: var(--muted); }
-
-    .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 8px; }
-    .tab { flex: 1; text-align: center; padding: 10px 0; font-size: 13px; color: var(--muted); cursor: pointer; }
-    .tab.active { color: var(--acc); border-bottom: 2px solid var(--acc); }
-
+    .tabs-pill {
+      display: flex; background: #e8e0d5; border-radius: 20px; padding: 3px; gap: 2px;
+    }
+    .tab-pill {
+      flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer; border-radius: 17px; transition: all 0.2s;
+    }
+    .tab-pill.active {
+      background: white; color: var(--acc); font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
     .food-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 0.5px solid var(--border);
-      cursor: pointer;
+      background: var(--card); border-radius: 18px; padding: 12px 14px;
+      display: flex; gap: 10px; align-items: center;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05); cursor: pointer;
     }
-    .food-item:last-child { border-bottom: none; }
     .food-item:active { opacity: 0.7; }
+    .food-item-icon {
+      width: 40px; height: 40px; border-radius: 14px; background: #f0ebe3;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .food-item-star { font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
 
-    /* =====================
-       СКАНЕР
-       ===================== */
-    .scan-frame {
-      width: 220px;
-      height: 160px;
-      border-radius: 12px;
-      background: #111;
-      position: relative;
+    /* ── BOTTOM SHEET ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(30,24,16,0.5); z-index: 50;
+      align-items: flex-end; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+    .product-sheet {
+      background: var(--bg); border-radius: 28px 28px 0 0;
+      width: 100%; max-width: 440px;
+      padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+      max-height: 92dvh; overflow-y: auto;
+    }
+    .sheet-handle {
+      width: 40px; height: 4px; background: #d0c8bc;
+      border-radius: 4px; margin: 0 auto 16px;
+    }
+    .gram-input {
+      width: 100%; background: var(--card); border: 0.5px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; color: var(--txt);
+      font-size: 18px; outline: none; text-align: center;
+    }
+    .meal-opt {
+      padding: 10px; border-radius: 10px; border: 0.5px solid var(--border);
+      background: var(--card); color: var(--muted); font-size: 13px;
+      text-align: center; cursor: pointer;
+    }
+    .meal-opt.selected { border-color: var(--acc); color: var(--acc); background: var(--green-bg); }
+    .macro-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1px; background: var(--border); border-radius: 10px; overflow: hidden; margin: 14px 0;
+    }
+    .macro-cell { background: var(--card); padding: 12px; text-align: center; }
+    .macro-cell .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .macro-cell .val { font-size: 17px; font-weight: 500; color: var(--txt); }
+    .save-btn {
+      width: 100%; padding: 14px; background: var(--acc); border: none;
+      border-radius: 12px; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    .save-btn:active { opacity: 0.85; }
+
+    /* ── CALENDAR ── */
+    .cal-day { padding: 6px 0; font-size: 12px; border-radius: 8px; cursor: pointer; text-align: center; }
+    .cal-day:hover { background: var(--green-pale); }
+    .cal-day.today { background: var(--acc); color: #fff; font-weight: 700; }
+    .cal-day.selected { background: var(--green-pale); color: var(--acc); font-weight: 700; }
+    .cal-day.muted { color: var(--muted); cursor: default; pointer-events: none; }
+
+    /* ── AI SHEET ── */
+    .ai-sheet {
+      display: none; position: absolute; inset: 0; z-index: 100;
+      flex-direction: column; justify-content: flex-end;
+    }
+    .ai-sheet.open { display: flex; }
+    .ai-backdrop { position: absolute; inset: 0; background: rgba(30,24,16,0.4); }
+    .ai-panel {
+      position: relative; background: var(--bg); border-radius: 28px 28px 0 0;
+      padding: 16px 20px 0; max-height: 80dvh; display: flex; flex-direction: column;
       overflow: hidden;
-      border: 1px solid var(--border);
     }
-    .scan-line {
-      position: absolute;
-      left: 0; right: 0;
-      height: 2px;
-      background: #e24b4a;
-      animation: scan 2s ease-in-out infinite;
+    .ai-panel-body {
+      flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 8px;
+      padding-bottom: 6px;
     }
-    @keyframes scan {
-      0%, 100% { top: 20%; }
-      50% { top: 75%; }
+    .ai-handle { width: 40px; height: 4px; background: #d0c8bc; border-radius: 4px; margin: 0 auto 16px; cursor: pointer; }
+    .ai-message {
+      background: var(--card); border-radius: 16px; padding: 14px;
+      font-size: 13px; color: var(--txt); line-height: 1.6;
     }
-    .scan-corner-tl, .scan-corner-tr, .scan-corner-bl, .scan-corner-br {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-color: var(--acc);
-      border-style: solid;
+    .ai-chip {
+      font-size: 12px; background: var(--green-bg); color: var(--acc);
+      padding: 6px 14px; border-radius: 20px; cursor: pointer;
     }
-    .scan-corner-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; border-radius: 2px 0 0 0; }
-    .scan-corner-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; border-radius: 0 2px 0 0; }
-    .scan-corner-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; border-radius: 0 0 0 2px; }
-    .scan-corner-br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; border-radius: 0 0 2px 0; }
+    .chips-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ai-user-msg {
+      background: var(--card); border-radius: 16px 16px 4px 16px;
+      padding: 10px 14px; font-size: 13px; color: var(--txt);
+      margin-left: 40px;
+    }
 
-    /* html5-qrcode overrides */
+    /* ── СКАНЕР ── */
     #qr-reader video { width: 100% !important; height: auto !important; display: block; }
     #qr-reader img { display: none !important; }
     #qr-reader__scan_region { background: transparent !important; }
     #qr-reader__dashboard { display: none !important; }
     #qr-reader__status_span { display: none !important; }
-
-    /* =====================
-       AI ЭКРАН
-       ===================== */
-    .ai-message {
-      background: #222d22;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 13px;
-      color: var(--txt);
-      line-height: 1.6;
-    }
-    .ai-chip {
-      font-size: 11px;
-      background: #2a3a2a;
-      color: var(--acc);
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 0.5px solid var(--ai-bord);
-      cursor: pointer;
-    }
-    .chips-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    @keyframes scan { 0%, 100% { top: 20%; } 50% { top: 75%; } }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .ai-user-msg {
-      background: #2a2a2a;
-      border-radius: 16px 16px 4px 16px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: var(--txt);
-      margin-left: 40px;
-    }
 
-    /* =====================
-       BOTTOM SHEET (карточка добавления)
-       ===================== */
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 50;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .overlay.open { display: flex; }
-
-    .product-sheet {
-      background: #1e1e1e;
-      border-radius: 16px 16px 0 0;
-      width: 100%;
-      max-width: 440px;
-      padding: 20px 16px 16px;
-      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .gram-input {
-      width: 100%;
-      background: #2a2a2a;
-      border: 0.5px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: var(--txt);
-      font-size: 18px;
-      outline: none;
-      text-align: center;
-    }
-
-    .meal-opt {
-      padding: 10px;
-      border-radius: 10px;
-      border: 0.5px solid var(--border);
-      background: #2a2a2a;
-      color: var(--muted);
-      font-size: 13px;
-      text-align: center;
-      cursor: pointer;
-    }
-    .meal-opt.selected { border-color: var(--acc); color: var(--acc); background: #1e2a1e; }
-
-    .macro-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 14px 0;
-    }
-    .macro-cell { background: #2a2a2a; padding: 12px; text-align: center; }
-    .macro-cell .lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-    .macro-cell .val { font-size: 17px; font-weight: 500; color: var(--txt); }
-
-    .save-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--acc2);
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    .save-btn:active { opacity: 0.8; }
-
-    /* =====================
-       КАЛЕНДАРЬ
-       ===================== */
-    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
-    .cal-head { text-align: center; padding: 6px 2px; font-size: 11px; color: var(--muted); }
-    .cal-day { text-align: center; padding: 7px 2px; font-size: 14px; color: var(--txt); cursor: pointer; border-radius: 50%; }
-    .cal-day.today { background: var(--acc); color: #111; font-weight: 500; }
-    .cal-day.selected { outline: 1.5px solid var(--acc); }
-    .cal-day.muted { color: var(--muted); }
-
+    /* ── УТИЛИТЫ ── */
+    .btn-icon { background: none; border: none; cursor: pointer; color: var(--muted); display: flex; align-items: center; }
+    .section-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
     .spinning { display: inline-block; animation: spin 1s linear infinite; }
-
-    /* =====================
-       УТИЛИТЫ
-       ===================== */
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-    }
-    .section-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
   </style>
 </head>
 <body>
@@ -403,168 +316,240 @@
   <!-- ==================== ЭКРАН: ДНЕВНИК ==================== -->
   <div class="screen active" id="s-diary">
 
-    <div style="padding:12px 14px 0;display:flex;justify-content:space-between;align-items:center;">
-      <span id="diary-date-label" style="font-size:17px;font-weight:500;color:var(--txt);">Сегодня</span>
-      <button class="btn-icon" onclick="showCal()">
-        <i class="ti ti-calendar" style="font-size:20px;" aria-hidden="true"></i>
+    <!-- Топбар -->
+    <div style="padding:22px 20px 6px;display:flex;justify-content:space-between;align-items:flex-end;">
+      <div>
+        <div style="font-size:12px;color:var(--muted);">Добрый день 🍽</div>
+        <div style="font-size:24px;font-weight:800;color:var(--txt);" id="diary-date-label">Сегодня</div>
+      </div>
+      <button onclick="showCal()"
+        style="width:38px;height:38px;border-radius:50%;background:var(--card);border:none;
+               cursor:pointer;display:flex;align-items:center;justify-content:center;
+               box-shadow:0 2px 8px rgba(0,0,0,0.08);color:var(--muted);">
+        <i class="ti ti-calendar" style="font-size:18px;" aria-hidden="true"></i>
       </button>
     </div>
 
-    <!-- Календарь (скрыт по умолчанию) -->
-    <div id="cal-panel" style="display:none;padding:10px 14px 4px;">
-      <div class="card" style="padding:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <button class="btn-icon" onclick="shiftMonth(-1)" style="color:var(--txt);padding:4px;">
-            <i class="ti ti-chevron-left" style="font-size:18px;"></i>
-          </button>
-          <span id="cal-month-label" style="font-size:14px;font-weight:500;color:var(--txt);"></span>
-          <button class="btn-icon" onclick="shiftMonth(1)" style="color:var(--txt);padding:4px;">
-            <i class="ti ti-chevron-right" style="font-size:18px;"></i>
-          </button>
-        </div>
-        <div class="cal-grid">
-          <div class="cal-head">Пн</div><div class="cal-head">Вт</div><div class="cal-head">Ср</div>
-          <div class="cal-head">Чт</div><div class="cal-head">Пт</div><div class="cal-head">Сб</div><div class="cal-head">Вс</div>
-        </div>
-        <div class="cal-grid" id="cal-days"></div>
-      </div>
-    </div>
+    <!-- Полоска недели -->
+    <div class="week-strip" id="week-strip"></div>
 
     <div class="scrollable">
 
-      <!-- Суммарная карточка -->
-      <div class="card">
-        <div class="summary-grid">
-          <div class="summary-col">
-            <div class="s-val" id="d-f" style="color:var(--color-fat);">0г</div>
-            <div class="s-lbl">Жиры</div>
-          </div>
-          <div class="summary-col">
-            <div class="s-val" id="d-c" style="color:var(--color-carbs);">0г</div>
-            <div class="s-lbl">Углев</div>
-          </div>
-          <div class="summary-col">
-            <div class="s-val" id="d-p" style="color:var(--color-protein);">0г</div>
-            <div class="s-lbl">Белок</div>
-          </div>
-          <div class="summary-col">
-            <div class="s-val" id="d-kcal" style="font-size:24px;color:#ffffff;">0</div>
-            <div class="s-lbl">Калории</div>
+      <!-- Кольца макронутриентов -->
+      <div class="ring-card">
+        <div style="position:relative;flex-shrink:0;">
+          <svg width="130" height="130" style="transform:rotate(-90deg);">
+            <circle cx="65" cy="65" r="58" fill="none" stroke="#e8e2d8" stroke-width="8"/>
+            <circle cx="65" cy="65" r="46" fill="none" stroke="#e8e2d8" stroke-width="8"/>
+            <circle cx="65" cy="65" r="34" fill="none" stroke="#e8e2d8" stroke-width="8"/>
+            <circle id="ring-p" cx="65" cy="65" r="58" fill="none" stroke="#7090c0" stroke-width="8"
+              stroke-dasharray="364" stroke-dashoffset="364" stroke-linecap="round"/>
+            <circle id="ring-c" cx="65" cy="65" r="46" fill="none" stroke="#8ab870" stroke-width="8"
+              stroke-dasharray="289" stroke-dashoffset="289" stroke-linecap="round"/>
+            <circle id="ring-f" cx="65" cy="65" r="34" fill="none" stroke="#d4956a" stroke-width="8"
+              stroke-dasharray="214" stroke-dashoffset="214" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="ring-kcal-num" style="font-size:22px;font-weight:800;color:var(--txt);line-height:1;">0</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">ккал</div>
           </div>
         </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" id="d-bar" style="width:0%;"></div>
+        <div class="ring-macros">
+          <div class="ring-macro-row">
+            <div class="ring-macro-top">
+              <div class="ring-dot" style="background:var(--color-fat);"></div>
+              <span class="ring-macro-label">Жиры</span>
+              <span class="ring-macro-val" id="ring-f-val">0г</span>
+            </div>
+            <div class="ring-bar-bg"><div class="ring-bar-fill" id="ring-f-bar" style="width:0%;background:var(--color-fat);"></div></div>
+          </div>
+          <div class="ring-macro-row">
+            <div class="ring-macro-top">
+              <div class="ring-dot" style="background:var(--color-carbs);"></div>
+              <span class="ring-macro-label">Углев</span>
+              <span class="ring-macro-val" id="ring-c-val">0г</span>
+            </div>
+            <div class="ring-bar-bg"><div class="ring-bar-fill" id="ring-c-bar" style="width:0%;background:var(--color-carbs);"></div></div>
+          </div>
+          <div class="ring-macro-row">
+            <div class="ring-macro-top">
+              <div class="ring-dot" style="background:var(--color-protein);"></div>
+              <span class="ring-macro-label">Белок</span>
+              <span class="ring-macro-val" id="ring-p-val">0г</span>
+            </div>
+            <div class="ring-bar-bg"><div class="ring-bar-fill" id="ring-p-bar" style="width:0%;background:var(--color-protein);"></div></div>
+          </div>
         </div>
       </div>
 
-      <!-- Завтрак -->
-      <div class="card">
-        <div class="meal-header" onclick="toggleMeal('b')">
-          <div class="meal-header-top">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:18px;">🌅</span>
-              <span class="title">Завтрак</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div id="bh-kcal-block" style="display:none;text-align:right;">
-                <div class="meal-kcal-num" id="bh-kcal"></div>
-                <div class="meal-kcal-lbl">Калории</div>
-              </div>
-              <button onclick="event.stopPropagation(); openManualAdd('b')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-              </button>
-            </div>
+      <!-- Быстрая статистика -->
+      <div class="quick-stats">
+        <div class="qs-block qs-green">
+          <div class="qs-icon-wrap">🔥</div>
+          <div>
+            <div class="qs-num" id="qs-remain">2000</div>
+            <div class="qs-lbl">ккал осталось</div>
           </div>
-          <div class="meal-header-stats" id="bh-stats" style="display:none;">
-            <div class="meal-stat-val" id="bh-f" style="color:var(--color-fat);"></div>
-            <div class="meal-stat-val" id="bh-c" style="color:var(--color-carbs);"></div>
-            <div class="meal-stat-val" id="bh-p" style="color:var(--color-protein);"></div>
+        </div>
+        <div class="qs-block qs-white">
+          <div class="qs-icon-wrap">💪</div>
+          <div>
+            <div class="qs-num" id="qs-protein">0г</div>
+            <div class="qs-lbl">из 150г белка</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI полоска -->
+      <div class="ai-strip" onclick="openAiSheet()">
+        <div class="ai-strip-icon">
+          <i class="ti ti-sparkles" style="font-size:18px;color:#c8e8a0;" aria-hidden="true"></i>
+        </div>
+        <div class="ai-strip-text">
+          <div class="ai-strip-hint">AI нутрициолог</div>
+          <div class="ai-strip-msg">Анализировать мой день →</div>
+        </div>
+      </div>
+
+      <!-- Приёмы пищи -->
+      <div class="meals-label">Приёмы пищи</div>
+
+      <!-- Завтрак -->
+      <div class="meal-card" style="background:var(--breakfast-bg);" onclick="toggleMeal('b')">
+        <div class="meal-card-header">
+          <div class="meal-icon-wrap" style="background:var(--breakfast-icon);">🌅</div>
+          <div class="meal-card-info">
+            <div class="meal-card-name">Завтрак</div>
+            <div class="meal-card-sub" id="bh-sub" style="color:var(--breakfast-sub);">Не записано</div>
+          </div>
+          <button class="meal-card-add-btn" style="background:var(--breakfast-icon);"
+            onclick="event.stopPropagation(); openSearchForMeal('b')">+</button>
+        </div>
+        <div class="meal-card-stats" id="bh-stats">
+          <div>
+            <div class="meal-stat-val" id="bh-f" style="color:var(--color-fat);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Жиры</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="bh-c" style="color:var(--color-carbs);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Углев</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="bh-p" style="color:var(--color-protein);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Белок</div>
           </div>
         </div>
         <div class="meal-items" id="meal-b"></div>
       </div>
 
       <!-- Обед -->
-      <div class="card">
-        <div class="meal-header" onclick="toggleMeal('l')">
-          <div class="meal-header-top">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:18px;">☀️</span>
-              <span class="title">Обед</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div id="lh-kcal-block" style="display:none;text-align:right;">
-                <div class="meal-kcal-num" id="lh-kcal"></div>
-                <div class="meal-kcal-lbl">Калории</div>
-              </div>
-              <button onclick="event.stopPropagation(); openManualAdd('l')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-              </button>
-            </div>
+      <div class="meal-card" style="background:var(--lunch-bg);" onclick="toggleMeal('l')">
+        <div class="meal-card-header">
+          <div class="meal-icon-wrap" style="background:var(--lunch-icon);">☀️</div>
+          <div class="meal-card-info">
+            <div class="meal-card-name">Обед</div>
+            <div class="meal-card-sub" id="lh-sub" style="color:var(--lunch-sub);">Не записано</div>
           </div>
-          <div class="meal-header-stats" id="lh-stats" style="display:none;">
-            <div class="meal-stat-val" id="lh-f" style="color:var(--color-fat);"></div>
-            <div class="meal-stat-val" id="lh-c" style="color:var(--color-carbs);"></div>
-            <div class="meal-stat-val" id="lh-p" style="color:var(--color-protein);"></div>
+          <button class="meal-card-add-btn" style="background:var(--lunch-icon);"
+            onclick="event.stopPropagation(); openSearchForMeal('l')">+</button>
+        </div>
+        <div class="meal-card-stats" id="lh-stats">
+          <div>
+            <div class="meal-stat-val" id="lh-f" style="color:var(--color-fat);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Жиры</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="lh-c" style="color:var(--color-carbs);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Углев</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="lh-p" style="color:var(--color-protein);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Белок</div>
           </div>
         </div>
         <div class="meal-items" id="meal-l"></div>
       </div>
 
       <!-- Ужин -->
-      <div class="card">
-        <div class="meal-header" onclick="toggleMeal('d')">
-          <div class="meal-header-top">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:18px;">🌆</span>
-              <span class="title">Ужин</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div id="dh-kcal-block" style="display:none;text-align:right;">
-                <div class="meal-kcal-num" id="dh-kcal"></div>
-                <div class="meal-kcal-lbl">Калории</div>
-              </div>
-              <button onclick="event.stopPropagation(); openManualAdd('d')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-              </button>
-            </div>
+      <div class="meal-card" style="background:var(--dinner-bg);" onclick="toggleMeal('d')">
+        <div class="meal-card-header">
+          <div class="meal-icon-wrap" style="background:var(--dinner-icon);">🌆</div>
+          <div class="meal-card-info">
+            <div class="meal-card-name">Ужин</div>
+            <div class="meal-card-sub" id="dh-sub" style="color:var(--dinner-sub);">Не записано</div>
           </div>
-          <div class="meal-header-stats" id="dh-stats" style="display:none;">
-            <div class="meal-stat-val" id="dh-f" style="color:var(--color-fat);"></div>
-            <div class="meal-stat-val" id="dh-c" style="color:var(--color-carbs);"></div>
-            <div class="meal-stat-val" id="dh-p" style="color:var(--color-protein);"></div>
+          <button class="meal-card-add-btn" style="background:var(--dinner-icon);"
+            onclick="event.stopPropagation(); openSearchForMeal('d')">+</button>
+        </div>
+        <div class="meal-card-stats" id="dh-stats">
+          <div>
+            <div class="meal-stat-val" id="dh-f" style="color:var(--color-fat);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Жиры</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="dh-c" style="color:var(--color-carbs);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Углев</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="dh-p" style="color:var(--color-protein);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Белок</div>
           </div>
         </div>
         <div class="meal-items" id="meal-d"></div>
       </div>
 
       <!-- Перекус -->
-      <div class="card">
-        <div class="meal-header" onclick="toggleMeal('s')">
-          <div class="meal-header-top">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:18px;">🌙</span>
-              <span class="title">Перекус</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div id="sh-kcal-block" style="display:none;text-align:right;">
-                <div class="meal-kcal-num" id="sh-kcal"></div>
-                <div class="meal-kcal-lbl">Калории</div>
-              </div>
-              <button onclick="event.stopPropagation(); openManualAdd('s')" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
-                <i class="ti ti-plus" style="font-size:18px;color:var(--acc);" aria-hidden="true"></i>
-              </button>
-            </div>
+      <div class="meal-card" style="background:var(--snack-bg);" onclick="toggleMeal('s')">
+        <div class="meal-card-header">
+          <div class="meal-icon-wrap" style="background:var(--snack-icon);">🌙</div>
+          <div class="meal-card-info">
+            <div class="meal-card-name">Перекус</div>
+            <div class="meal-card-sub" id="sh-sub" style="color:var(--snack-sub);">Не записано</div>
           </div>
-          <div class="meal-header-stats" id="sh-stats" style="display:none;">
-            <div class="meal-stat-val" id="sh-f" style="color:var(--color-fat);"></div>
-            <div class="meal-stat-val" id="sh-c" style="color:var(--color-carbs);"></div>
-            <div class="meal-stat-val" id="sh-p" style="color:var(--color-protein);"></div>
+          <button class="meal-card-add-btn" style="background:var(--snack-icon);"
+            onclick="event.stopPropagation(); openSearchForMeal('s')">+</button>
+        </div>
+        <div class="meal-card-stats" id="sh-stats">
+          <div>
+            <div class="meal-stat-val" id="sh-f" style="color:var(--color-fat);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Жиры</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="sh-c" style="color:var(--color-carbs);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Углев</div>
+          </div>
+          <div>
+            <div class="meal-stat-val" id="sh-p" style="color:var(--color-protein);">—</div>
+            <div style="font-size:10px;color:var(--muted);">Белок</div>
           </div>
         </div>
         <div class="meal-items" id="meal-s"></div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Календарь (оверлей) -->
+  <div id="cal-overlay" onclick="if(event.target===this)showCal()"
+    style="display:none;position:fixed;inset:0;z-index:300;
+           background:rgba(30,24,16,0.3);align-items:flex-start;justify-content:center;padding-top:90px;">
+    <div style="background:var(--card);border-radius:20px;padding:16px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.15);width:280px;max-width:90vw;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <button onclick="shiftMonth(-1)" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);line-height:1;">‹</button>
+        <span id="cal-month-label" style="font-size:14px;font-weight:600;color:var(--txt);">Январь 2025</span>
+        <button onclick="shiftMonth(1)" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);line-height:1;">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Пн</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Вт</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Ср</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Чт</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Пт</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Сб</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Вс</div>
+      </div>
+      <div id="cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
     </div>
   </div>
 
@@ -583,18 +568,31 @@
         Найти
       </button>
     </div>
-    <div class="tabs" style="margin:0 14px;">
-      <div class="tab active" id="tab-search" onclick="switchSearchTab('search')">База</div>
-      <div class="tab" id="tab-recent" onclick="switchSearchTab('recent')">Недавние</div>
+    <div class="tabs-pill" style="margin:4px 14px 0;">
+      <div class="tab-pill active" id="tab-search" onclick="switchSearchTab('search')">База</div>
+      <div class="tab-pill" id="tab-recent" onclick="switchSearchTab('recent')">Недавние</div>
+      <div class="tab-pill" id="tab-fav" onclick="switchSearchTab('fav')">⭐ Мои</div>
     </div>
-    <div class="scrollable" style="padding-top:8px;">
+    <div class="scrollable" style="padding-top:8px;padding-bottom:0;">
       <div id="search-results"></div>
-      <button id="btn-add-manual" onclick="openManualAdd()"
-        style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
-               padding:13px;background:var(--card);border:0.5px dashed var(--border);
-               border-radius:12px;color:var(--muted);font-size:14px;cursor:pointer;">
+    </div>
+    <!-- Закреплённые кнопки действий -->
+    <div style="flex-shrink:0;padding:8px 16px 10px;display:flex;flex-direction:column;gap:8px;border-top:0.5px solid var(--border);">
+      <button onclick="openManualAdd()"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;
+               width:100%;padding:12px;background:var(--card);
+               border:0.5px dashed var(--border);border-radius:12px;
+               color:var(--muted);font-size:14px;cursor:pointer;">
         <i class="ti ti-plus" style="font-size:16px;color:var(--acc);" aria-hidden="true"></i>
         Добавить продукт вручную
+      </button>
+      <button onclick="nav('scan')"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;
+               width:100%;padding:12px;background:var(--acc);
+               border:none;border-radius:12px;
+               color:#fff;font-size:14px;font-weight:500;cursor:pointer;">
+        <i class="ti ti-barcode" style="font-size:16px;" aria-hidden="true"></i>
+        Сканировать штрих-код
       </button>
     </div>
   </div>
@@ -609,31 +607,35 @@
       <p id="scan-status" style="font-size:13px;color:var(--muted);text-align:center;min-height:18px;"></p>
       <p style="font-size:12px;color:var(--muted);">EAN-13, EAN-8, UPC-A</p>
       <button onclick="openManualAdd()"
-        style="background:#2a2a2a;border:0.5px solid var(--border);border-radius:20px;padding:10px 24px;color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+        style="background:var(--card);border:0.5px solid var(--border);border-radius:20px;padding:10px 24px;color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
         <i class="ti ti-keyboard" aria-hidden="true"></i> Ввести вручную
       </button>
     </div>
   </div>
 
-  <!-- ==================== ЭКРАН: AI ==================== -->
-  <div class="screen" id="s-ai">
-    <div style="padding:12px 14px 0;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-      <div style="width:28px;height:28px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;">
-        <i class="ti ti-sparkles" style="font-size:14px;color:#111;" aria-hidden="true"></i>
+  <!-- ==================== AI SHEET ==================== -->
+  <div class="ai-sheet" id="ai-sheet">
+    <div class="ai-backdrop" onclick="closeAiSheet()"></div>
+    <div class="ai-panel">
+      <div class="ai-handle" onclick="closeAiSheet()"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-shrink:0;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-sparkles" style="font-size:14px;color:#c8e8a0;" aria-hidden="true"></i>
+        </div>
+        <span style="font-size:16px;font-weight:700;color:var(--txt);">AI нутрициолог</span>
       </div>
-      <span style="font-size:16px;font-weight:500;color:var(--txt);">AI нутрициолог</span>
-    </div>
-    <div class="scrollable" id="ai-body"></div>
-    <div style="padding:10px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;flex-shrink:0;" id="ai-input-row">
-      <input type="text" id="ai-inp" placeholder="спросить..."
-        style="flex:1;font-size:13px;background:#222;border:0.5px solid var(--border);
-               color:var(--txt);border-radius:20px;padding:10px 14px;outline:none;"
-        onkeydown="if(event.key==='Enter')sendAiQuestion()"/>
-      <button onclick="sendAiQuestion()"
-        style="width:40px;height:40px;border-radius:50%;background:var(--acc2);border:none;
-               cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i class="ti ti-send" style="font-size:16px;color:#fff;" aria-hidden="true"></i>
-      </button>
+      <div class="ai-panel-body" id="ai-panel-body"></div>
+      <div style="flex-shrink:0;display:flex;gap:8px;padding:8px 0 calc(12px + env(safe-area-inset-bottom,0px));border-top:0.5px solid var(--border);">
+        <input type="text" id="ai-panel-inp" placeholder="спросить..."
+          style="flex:1;font-size:13px;background:var(--card);border:0.5px solid var(--border);
+                 color:var(--txt);border-radius:20px;padding:10px 14px;outline:none;"
+          onkeydown="if(event.key==='Enter')sendAiQuestion()"/>
+        <button onclick="sendAiQuestion()"
+          style="width:40px;height:40px;border-radius:50%;background:var(--acc);border:none;
+                 cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-send" style="font-size:16px;color:#fff;" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -654,13 +656,13 @@
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <button onclick="changeGrams(-5)"
           style="width:36px;height:36px;border-radius:8px;border:0.5px solid var(--border);
-                 background:#2a2a2a;color:var(--txt);font-size:20px;cursor:pointer;
+                 background:var(--card);color:var(--txt);font-size:20px;cursor:pointer;
                  display:flex;align-items:center;justify-content:center;">−</button>
         <input class="gram-input" id="gram-inp" type="text" inputmode="decimal" value="100"
           oninput="updateMacros()" onfocus="this.select()" style="flex:1;"/>
         <button onclick="changeGrams(5)"
           style="width:36px;height:36px;border-radius:8px;border:0.5px solid var(--border);
-                 background:#2a2a2a;color:var(--txt);font-size:20px;cursor:pointer;
+                 background:var(--card);color:var(--txt);font-size:20px;cursor:pointer;
                  display:flex;align-items:center;justify-content:center;">+</button>
         <span style="font-size:14px;color:var(--muted);">г</span>
       </div>
@@ -744,7 +746,7 @@
 
       <button id="manual-save-btn" class="save-btn" onclick="saveManualProduct()">Сохранить продукт</button>
       <button onclick="closeManualAdd(); nav('scan')"
-        style="width:100%;padding:14px;background:#2a2a2a;border:0.5px solid var(--border);
+        style="width:100%;padding:14px;background:var(--card);border:0.5px solid var(--border);
                border-radius:12px;color:var(--muted);font-size:16px;font-weight:500;cursor:pointer;
                margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
         <i class="ti ti-barcode" style="font-size:18px;" aria-hidden="true"></i>
@@ -763,9 +765,6 @@
     </button>
     <button class="nav-btn" id="nav-scan" onclick="nav('scan')">
       <i class="ti ti-barcode" aria-hidden="true"></i>Сканер
-    </button>
-    <button class="nav-btn" id="nav-ai" onclick="nav('ai')">
-      <i class="ti ti-sparkles" aria-hidden="true"></i>AI
     </button>
   </div>
 
@@ -878,17 +877,19 @@
     document.getElementById('diary-date-label').textContent =
       isToday ? 'Сегодня' : formatDateLabel(date);
 
+    renderWeekStrip(date);
+
     ['b','l','d','s'].forEach(m => {
       document.getElementById('meal-' + m).innerHTML = '';
       document.getElementById('meal-' + m).classList.remove('open');
-      document.getElementById(m + 'h-kcal-block').style.display = 'none';
-      document.getElementById(m + 'h-kcal').textContent = '';
-      document.getElementById(m + 'h-stats').style.display = 'none';
-      ['f','c','p'].forEach(k => { document.getElementById(m + 'h-' + k).textContent = ''; });
+      document.getElementById(m + 'h-sub').textContent = 'Не записано';
+      document.getElementById(m + 'h-stats').classList.remove('visible');
+      ['f','c','p'].forEach(k => { document.getElementById(m + 'h-' + k).textContent = '—'; });
     });
 
     const meals = await dbGetByIndex('meals', 'date', date);
     const mealKcal   = { b:0, l:0, d:0, s:0 };
+    const mealCount  = { b:0, l:0, d:0, s:0 };
     const mealMacros = { b:{f:0,c:0,p:0}, l:{f:0,c:0,p:0}, d:{f:0,c:0,p:0}, s:{f:0,c:0,p:0} };
     const totals     = { kcal:0, p:0, c:0, f:0 };
 
@@ -896,6 +897,7 @@
       const key = Object.keys(MEAL_TYPES).find(k => MEAL_TYPES[k] === meal.meal_type);
       if (!key) return;
       mealKcal[key]      += meal.kcal;
+      mealCount[key]     += 1;
       mealMacros[key].f  += meal.fat;
       mealMacros[key].c  += meal.carbs;
       mealMacros[key].p  += meal.protein;
@@ -908,10 +910,11 @@
 
     ['b','l','d','s'].forEach(m => {
       if (mealKcal[m] > 0) {
+        const n = mealCount[m];
+        const word = n === 1 ? 'продукт' : n < 5 ? 'продукта' : 'продуктов';
         document.getElementById('meal-' + m).classList.add('open');
-        document.getElementById(m + 'h-kcal-block').style.display = 'block';
-        document.getElementById(m + 'h-kcal').textContent = Math.round(mealKcal[m]);
-        document.getElementById(m + 'h-stats').style.display = 'grid';
+        document.getElementById(m + 'h-sub').textContent = Math.round(mealKcal[m]) + ' ккал · ' + n + ' ' + word;
+        document.getElementById(m + 'h-stats').classList.add('visible');
         document.getElementById(m + 'h-f').textContent = fmt1(mealMacros[m].f) + 'г';
         document.getElementById(m + 'h-c').textContent = fmt1(mealMacros[m].c) + 'г';
         document.getElementById(m + 'h-p').textContent = fmt1(mealMacros[m].p) + 'г';
@@ -925,7 +928,7 @@
     const row = document.createElement('div');
     row.className = 'food-row';
     row.style.cursor = 'pointer';
-    row.onclick = () => editMeal(meal);
+    row.onclick = (e) => { e.stopPropagation(); editMeal(meal); };
     row.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;">
         <span class="food-row-name">${esc(meal.product_name)}</span>
@@ -951,11 +954,23 @@
   }
 
   function updateSummaryCard(t) {
-    document.getElementById('d-kcal').textContent = Math.round(t.kcal);
-    document.getElementById('d-f').textContent  = fmt1(t.f) + 'г';
-    document.getElementById('d-c').textContent  = fmt1(t.c) + 'г';
-    document.getElementById('d-p').textContent  = fmt1(t.p) + 'г';
-    document.getElementById('d-bar').style.width = Math.min(100, Math.round(t.kcal / GOALS.kcal * 100)) + '%';
+    document.getElementById('ring-kcal-num').textContent = Math.round(t.kcal);
+    document.getElementById('ring-f-val').textContent = fmt1(t.f) + 'г';
+    document.getElementById('ring-c-val').textContent = fmt1(t.c) + 'г';
+    document.getElementById('ring-p-val').textContent = fmt1(t.p) + 'г';
+
+    const pPct = Math.min(1, t.p / GOALS.p);
+    const cPct = Math.min(1, t.c / GOALS.c);
+    const fPct = Math.min(1, t.f / GOALS.f);
+    document.getElementById('ring-p').style.strokeDashoffset = (364 * (1 - pPct)).toFixed(1);
+    document.getElementById('ring-c').style.strokeDashoffset = (289 * (1 - cPct)).toFixed(1);
+    document.getElementById('ring-f').style.strokeDashoffset = (214 * (1 - fPct)).toFixed(1);
+    document.getElementById('ring-p-bar').style.width = Math.min(100, Math.round(pPct * 100)) + '%';
+    document.getElementById('ring-c-bar').style.width = Math.min(100, Math.round(cPct * 100)) + '%';
+    document.getElementById('ring-f-bar').style.width = Math.min(100, Math.round(fPct * 100)) + '%';
+
+    document.getElementById('qs-remain').textContent = Math.max(0, GOALS.kcal - Math.round(t.kcal));
+    document.getElementById('qs-protein').textContent = Math.round(t.p) + 'г';
   }
 
   // ── Навигация ─────────────────────────────────────────────
@@ -970,24 +985,29 @@
       switchSearchTab('search');
     }
     if (s === 'scan') startScanner();
-    if (s === 'ai') loadAiScreen();
   }
 
   function toggleMeal(id) {
     document.getElementById('meal-' + id).classList.toggle('open');
   }
 
+  function openSearchForMeal(mealType) {
+    selectMeal(mealType);
+    nav('search');
+    switchSearchTab('recent');
+  }
+
   // ── Календарь ─────────────────────────────────────────────
   function showCal() {
-    const panel = document.getElementById('cal-panel');
-    const isHidden = panel.style.display === 'none';
+    const overlay = document.getElementById('cal-overlay');
+    const isHidden = overlay.style.display !== 'flex';
     if (isHidden) {
-      const now = new Date();
-      calYear  = now.getFullYear();
-      calMonth = now.getMonth();
+      const d = new Date(currentDate + 'T12:00:00');
+      calYear  = d.getFullYear();
+      calMonth = d.getMonth();
       renderCalendar();
     }
-    panel.style.display = isHidden ? 'block' : 'none';
+    overlay.style.display = isHidden ? 'flex' : 'none';
   }
 
   function shiftMonth(delta) {
@@ -1109,7 +1129,9 @@
     searchTab = tab;
     document.getElementById('tab-search').classList.toggle('active', tab === 'search');
     document.getElementById('tab-recent').classList.toggle('active', tab === 'recent');
+    document.getElementById('tab-fav').classList.toggle('active', tab === 'fav');
     if (tab === 'recent') loadRecentProducts();
+    else if (tab === 'fav') loadFavorites();
     else onSearchInput(document.getElementById('search-inp').value);
   }
 
@@ -1193,8 +1215,9 @@
       if (apiState !== null) {
         const lbl = document.createElement('p');
         lbl.className = 'section-label';
-        container.appendChild(lbl);
+        lbl.style.cssText = 'padding:0 16px;margin-bottom:6px;';
         lbl.textContent = 'В базе';
+        container.appendChild(lbl);
       }
       container.appendChild(buildProductCard(local, false));
     }
@@ -1203,7 +1226,7 @@
 
     const lbl = document.createElement('p');
     lbl.className = 'section-label';
-    lbl.style.marginTop = '10px';
+    lbl.style.cssText = 'padding:0 16px;margin-top:10px;margin-bottom:6px;';
     lbl.textContent = 'Из интернета';
     container.appendChild(lbl);
 
@@ -1214,12 +1237,12 @@
       container.appendChild(loader);
     } else if (apiState === 'error') {
       const msg = document.createElement('p');
-      msg.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 0;';
+      msg.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 16px;';
       msg.textContent = 'Сервис недоступен — попробуй ещё раз';
       container.appendChild(msg);
     } else if (apiState.length === 0) {
       const msg = document.createElement('p');
-      msg.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 0;';
+      msg.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 16px;';
       msg.textContent = 'Не найдено';
       container.appendChild(msg);
     } else {
@@ -1228,9 +1251,8 @@
   }
 
   function buildProductCard(products, fromApi) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.cssText = 'padding:0 14px;';
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;padding:0 16px;';
     products.forEach(p => {
       const item = document.createElement('div');
       item.className = 'food-item';
@@ -1241,14 +1263,18 @@
           <div style="font-size:14px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.name)}</div>
           <div style="font-size:11px;color:var(--muted);">${portionKcal} ккал · ${portionG}г${p.brand ? ' · ' + esc(p.brand) : ''}</div>
         </div>
+        ${!fromApi ? `<span class="food-item-star">${p.is_favorite ? '⭐' : '☆'}</span>` : ''}
         <i class="ti ti-${fromApi ? 'cloud-download' : 'arrow-up-right'}"
-           style="font-size:16px;color:var(--muted);flex-shrink:0;margin-left:8px;" aria-hidden="true"></i>`;
+           style="font-size:16px;color:var(--muted);flex-shrink:0;margin-left:4px;" aria-hidden="true"></i>`;
+      if (!fromApi) {
+        item.querySelector('.food-item-star').onclick = e => toggleFavorite(p.barcode, e);
+      }
       item.onclick = () => fromApi
         ? saveApiProduct(p)
         : openProduct(p.name, p.brand||'', p.kcal_per_100, p.fat_per_100, p.carbs_per_100, p.protein_per_100, p.barcode, portionG);
-      card.appendChild(item);
+      wrap.appendChild(item);
     });
-    return card;
+    return wrap;
   }
 
   async function saveApiProduct(p) {
@@ -1268,6 +1294,73 @@
     }
     const saved = await dbGet('products', p.barcode);
     openProduct(p.name, p.brand||'', p.kcal_per_100, p.fat_per_100, p.carbs_per_100, p.protein_per_100, p.barcode, saved?.last_grams || 100);
+  }
+
+  // ── Полоска недели ────────────────────────────────────────
+  async function renderWeekStrip(date) {
+    const strip = document.getElementById('week-strip');
+    strip.innerHTML = '';
+    const DAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    const d = new Date(date + 'T12:00:00');
+    const dow = d.getDay();
+    const mondayOffset = dow === 0 ? -6 : 1 - dow;
+
+    const allMeals = db ? await dbGetAll('meals') : [];
+    const datesWithData = new Set(allMeals.map(m => m.date));
+
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(d);
+      day.setDate(d.getDate() + mondayOffset + i);
+      const ds = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+      const pill = document.createElement('div');
+      pill.className = 'day-pill' +
+        (ds === date ? ' active' : '') +
+        (datesWithData.has(ds) ? ' has-data' : '');
+      pill.innerHTML = `
+        <div class="dp-dow">${DAYS[day.getDay()]}</div>
+        <div class="dp-num">${day.getDate()}</div>
+        <div class="dp-dot"></div>`;
+      pill.onclick = () => loadDiary(ds);
+      strip.appendChild(pill);
+    }
+  }
+
+  // ── Избранное ──────────────────────────────────────────────
+  async function toggleFavorite(barcode, e) {
+    e.stopPropagation();
+    const p = await dbGet('products', barcode);
+    if (!p) return;
+    p.is_favorite = !p.is_favorite;
+    await dbPut('products', p);
+    if (searchTab === 'fav') loadFavorites();
+    else onSearchInput(document.getElementById('search-inp').value);
+  }
+
+  async function loadFavorites() {
+    const all = await dbGetAll('products');
+    const favs = all.filter(p => p.is_favorite).sort((a, b) => a.name.localeCompare(b.name));
+    const container = document.getElementById('search-results');
+    if (favs.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 20px;color:var(--muted);">
+          <div style="font-size:40px;opacity:0.4;">⭐</div>
+          <p style="margin-top:12px;font-size:14px;">Нет избранных продуктов</p>
+          <p style="font-size:12px;margin-top:6px;">Нажми ☆ рядом с продуктом чтобы добавить</p>
+        </div>`;
+      return;
+    }
+    container.innerHTML = '';
+    container.appendChild(buildProductCard(favs, false));
+  }
+
+  // ── AI Sheet ──────────────────────────────────────────────
+  function openAiSheet() {
+    document.getElementById('ai-sheet').classList.add('open');
+    loadAiScreen();
+  }
+
+  function closeAiSheet() {
+    document.getElementById('ai-sheet').classList.remove('open');
   }
 
   async function loadRecentProducts() {
@@ -1350,7 +1443,8 @@
         fat_per_100:     fat,
         last_used:       existing?.last_used || Date.now(),
         use_count:       existing?.use_count || 0,
-        last_grams:      existing?.last_grams
+        last_grams:      existing?.last_grams,
+        is_favorite:     existing?.is_favorite || false
       });
       curProduct.name  = name;
       curProduct.brand = brand;
@@ -1492,7 +1586,7 @@
   function setGeminiKey(k) { localStorage.setItem('gemini_key', k.trim()); }
 
   async function loadAiScreen() {
-    const body = document.getElementById('ai-body');
+    const body = document.getElementById('ai-panel-body');
     const key = getGeminiKey();
     const meals = await dbGetByIndex('meals', 'date', currentDate);
     const t = meals.reduce((a, m) => ({
@@ -1679,11 +1773,11 @@ ${mealsText}Итого: ${Math.round(t.kcal)}ккал, белок ${Math.round(t
   }
 
   async function sendAiQuestion() {
-    const inp = document.getElementById('ai-inp');
+    const inp = document.getElementById('ai-panel-inp');
     const q = inp.value.trim();
     if (!q || !getGeminiKey()) return;
     inp.value = '';
-    const body = document.getElementById('ai-body');
+    const body = document.getElementById('ai-panel-body');
 
     const qEl = document.createElement('div');
     qEl.className = 'ai-user-msg';
