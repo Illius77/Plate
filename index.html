@@ -50,7 +50,7 @@
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
     }
     @media (max-width: 440px) {
-      body { padding: 0; align-items: stretch; background: var(--bg); }
+      body { padding: 0; align-items: stretch; background: var(--bg); overflow: hidden; }
       .app { border-radius: 0; height: 100dvh; max-width: 100%;
              padding-top: env(safe-area-inset-top, 0px); box-shadow: none; }
     }
@@ -60,6 +60,7 @@
     .scrollable {
       flex: 1; min-height: 0; overflow-y: auto;
       display: flex; flex-direction: column; padding-bottom: 20px;
+      overscroll-behavior: none;
     }
     .scrollable::-webkit-scrollbar { display: none; }
     .scrollable > * { flex-shrink: 0; }
