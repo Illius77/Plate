@@ -1148,6 +1148,7 @@
   }
 
   function triggerSearch() {
+    if (searchTab !== 'search') switchSearchTab('search');
     const q = document.getElementById('search-inp').value;
     onSearchInput(q);
   }
