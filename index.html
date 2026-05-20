@@ -1069,8 +1069,19 @@
       const boxW = Math.round(Math.min(minDim * 0.75, 260));
       const boxH = Math.round(boxW * 0.5);
       scanner = new Html5Qrcode('qr-reader');
+
+      // Ищем основную заднюю камеру, избегая ультра-широкоугольной
+      let cameraConstraint = { facingMode: 'environment' };
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        const main = cameras.find(c => /^back camera$/i.test(c.label))
+                  || cameras.find(c => /(back|rear|задн)/i.test(c.label) && !/(ultra|wide|широко|сверх|telephoto|телефото)/i.test(c.label))
+                  || cameras.find(c => /(back|rear|задн)/i.test(c.label));
+        if (main) cameraConstraint = main.id;
+      } catch(e) {}
+
       await scanner.start(
-        { facingMode: 'environment' },
+        cameraConstraint,
         { fps: 10, qrbox: { width: boxW, height: boxH } },
         onBarcodeScanned,
         () => {}
