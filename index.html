@@ -53,7 +53,7 @@
       html, body { overflow: hidden; height: 100%; }
       body { padding: 0; align-items: stretch; background: var(--bg); }
       .app { position: fixed; inset: 0; min-height: 0; border-radius: 0; max-width: 100%;
-             padding-top: env(safe-area-inset-top, 0px); box-shadow: none; }
+             padding-top: env(safe-area-inset-top, 0px); box-shadow: none; touch-action: none; }
     }
 
     .screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
@@ -228,7 +228,7 @@
       background: var(--bg); border-radius: 28px 28px 0 0;
       width: 100%; max-width: 440px;
       padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px));
-      max-height: 92dvh; overflow-y: auto;
+      max-height: 92dvh; overflow-y: auto; touch-action: pan-y;
     }
     .sheet-handle {
       width: 40px; height: 4px; background: #d0c8bc;
@@ -1817,16 +1817,6 @@ ${mealsText}Итого: ${Math.round(t.kcal)}ккал, белок ${Math.round(t
     body.scrollTop = body.scrollHeight;
   }
 
-  let _tsY = 0;
-  document.addEventListener('touchstart', e => { _tsY = e.touches[0].clientY; }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    const sc = e.target.closest('.scrollable, .product-sheet, .ai-panel-body');
-    if (!sc) { e.preventDefault(); return; }
-    const dy = e.touches[0].clientY - _tsY;
-    const atTop    = sc.scrollTop <= 0 && dy > 0;
-    const atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1 && dy < 0;
-    if (atTop || atBottom) e.preventDefault();
-  }, { passive: false });
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
