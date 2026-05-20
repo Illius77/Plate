@@ -778,6 +778,56 @@
   const MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь',
                        'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
+  const RU_EN = {
+    'клубника':'strawberry','яблоко':'apple','яблоки':'apple','банан':'banana',
+    'груша':'pear','апельсин':'orange','мандарин':'tangerine','виноград':'grapes',
+    'арбуз':'watermelon','дыня':'melon','персик':'peach','слива':'plum',
+    'черника':'blueberry','малина':'raspberry','вишня':'cherry','черешня':'sweet cherry',
+    'абрикос':'apricot','ананас':'pineapple','манго':'mango','киви':'kiwi',
+    'лимон':'lemon','лайм':'lime','грейпфрут':'grapefruit','авокадо':'avocado',
+    'хурма':'persimmon','гранат':'pomegranate','инжир':'fig','изюм':'raisin',
+    'финики':'dates','чернослив':'prune',
+    'помидор':'tomato','томат':'tomato','огурец':'cucumber','морковь':'carrot',
+    'картофель':'potato','картошка':'potato','лук':'onion','чеснок':'garlic',
+    'капуста':'cabbage','брокколи':'broccoli','шпинат':'spinach','перец':'pepper',
+    'свекла':'beet','баклажан':'eggplant','кабачок':'zucchini','тыква':'pumpkin',
+    'горох':'peas','фасоль':'beans','кукуруза':'corn','редис':'radish',
+    'цветная капуста':'cauliflower','брюссельская капуста':'brussels sprouts',
+    'сельдерей':'celery','петрушка':'parsley','укроп':'dill',
+    'гречка':'buckwheat','рис':'rice','овсянка':'oatmeal','овсяные хлопья':'oatmeal',
+    'пшено':'millet','манка':'semolina','перловка':'barley','булгур':'bulgur',
+    'киноа':'quinoa','макароны':'pasta','спагетти':'spaghetti','хлеб':'bread',
+    'батон':'white bread','ржаной хлеб':'rye bread','лаваш':'pita',
+    'молоко':'milk','кефир':'kefir','йогурт':'yogurt','творог':'cottage cheese',
+    'сметана':'sour cream','сыр':'cheese','масло':'butter','сливки':'cream',
+    'мороженое':'ice cream','ряженка':'fermented baked milk',
+    'яйцо':'egg','яйца':'eggs','курица':'chicken','куриное филе':'chicken breast',
+    'говядина':'beef','свинина':'pork','баранина':'lamb','индейка':'turkey',
+    'рыба':'fish','лосось':'salmon','тунец':'tuna','треска':'cod',
+    'форель':'trout','сельдь':'herring','скумбрия':'mackerel','креветки':'shrimp',
+    'мясо':'meat','печень':'liver','фарш':'ground meat','котлета':'cutlet',
+    'сосиски':'sausage','колбаса':'sausage','ветчина':'ham','бекон':'bacon',
+    'сахар':'sugar','мёд':'honey','мед':'honey','шоколад':'chocolate',
+    'варенье':'jam','мармелад':'marmalade','зефир':'marshmallow',
+    'орехи':'nuts','грецкий орех':'walnut','миндаль':'almond','арахис':'peanut',
+    'кешью':'cashew','фундук':'hazelnut','фисташки':'pistachios',
+    'семечки':'sunflower seeds','тыквенные семечки':'pumpkin seeds',
+    'масло растительное':'vegetable oil','оливковое масло':'olive oil',
+    'майонез':'mayonnaise','кетчуп':'ketchup','горчица':'mustard',
+    'кофе':'coffee','чай':'tea','сок':'juice','вода':'water',
+    'макаронные изделия':'pasta','пюре':'mashed potato','суп':'soup',
+    'борщ':'borscht','салат':'salad','омлет':'omelette','каша':'porridge',
+  };
+
+  function translateToEnglish(q) {
+    if (/^[a-z\s]+$/i.test(q)) return q;
+    if (RU_EN[q]) return RU_EN[q];
+    for (const [ru, en] of Object.entries(RU_EN)) {
+      if (q.includes(ru)) return q.replace(ru, en);
+    }
+    return q;
+  }
+
   // ── Состояние ─────────────────────────────────────────────
   let db = null;
   let currentDate = todayStr();
@@ -1153,29 +1203,59 @@
     onSearchInput(q);
   }
 
+  let _searchSeq = 0;
+
   async function onSearchInput(query) {
     if (searchTab !== 'search') return;
 
+    const seq = ++_searchSeq;
     const q = query.trim().toLowerCase();
     const all = await dbGetAll('products');
+    if (seq !== _searchSeq) return;
+
     const local = q
       ? all.filter(p => p.name.toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q))
       : all;
     local.sort((a, b) => (b.last_used || 0) - (a.last_used || 0));
 
     if (!q || q.length < 3) {
-      renderSearch(local, q, null);
+      renderSearch(local, q, null, null);
       return;
     }
 
-    renderSearch(local, q, 'loading');
+    renderSearch(local, q, 'loading', 'loading');
 
-    try {
-      const api = await searchOpenFoodFacts(q);
-      renderSearch(local, q, api);
-    } catch(err) {
-      renderSearch(local, q, 'error');
-    }
+    const [usdaRes, offRes] = await Promise.allSettled([
+      searchUSDA(translateToEnglish(q)),
+      searchOpenFoodFacts(q)
+    ]);
+    if (seq !== _searchSeq) return;
+
+    renderSearch(
+      local, q,
+      usdaRes.status === 'fulfilled' ? usdaRes.value : 'error',
+      offRes.status  === 'fulfilled' ? offRes.value  : 'error'
+    );
+  }
+
+  async function searchUSDA(query) {
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&api_key=${getUsdaKey() || 'DEMO_KEY'}&pageSize=6&dataType=Foundation,SR%20Legacy`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`USDA ${res.status}`);
+    const data = await res.json();
+    const get = (nutrients, id) => nutrients.find(n => n.nutrientId === id)?.value ?? 0;
+    return (data.foods || [])
+      .filter(f => f.foodNutrients?.some(n => n.nutrientId === 1008))
+      .slice(0, 6)
+      .map(f => ({
+        barcode:         `usda_${f.fdcId}`,
+        name:            f.description,
+        brand:           '',
+        kcal_per_100:    Math.round(get(f.foodNutrients, 1008)),
+        protein_per_100: +get(f.foodNutrients, 1003).toFixed(1),
+        carbs_per_100:   +get(f.foodNutrients, 1005).toFixed(1),
+        fat_per_100:     +get(f.foodNutrients, 1004).toFixed(1),
+      }));
   }
 
   async function searchOpenFoodFacts(query, attempt = 1) {
@@ -1211,7 +1291,7 @@
       }));
   }
 
-  function renderSearch(local, query, apiState) {
+  function renderSearch(local, query, usdaState, offState) {
     const container = document.getElementById('search-results');
     container.innerHTML = '';
 
@@ -1224,8 +1304,10 @@
       return;
     }
 
+    const hasApi = usdaState !== null || offState !== null;
+
     if (local.length > 0) {
-      if (apiState !== null) {
+      if (hasApi) {
         const lbl = document.createElement('p');
         lbl.className = 'section-label';
         lbl.style.cssText = 'padding:0 16px;margin-bottom:6px;';
@@ -1235,31 +1317,36 @@
       container.appendChild(buildProductCard(local, false));
     }
 
-    if (apiState === null) return;
+    if (!hasApi) return;
 
+    appendSection(container, 'USDA — базовые продукты', usdaState);
+    appendSection(container, 'Бренды и штрихкоды', offState);
+  }
+
+  function appendSection(container, title, state) {
     const lbl = document.createElement('p');
     lbl.className = 'section-label';
     lbl.style.cssText = 'padding:0 16px;margin-top:10px;margin-bottom:6px;';
-    lbl.textContent = 'Из интернета';
+    lbl.textContent = title;
     container.appendChild(lbl);
 
-    if (apiState === 'loading') {
-      const loader = document.createElement('div');
-      loader.style.cssText = 'text-align:center;padding:20px;color:var(--muted);font-size:13px;';
-      loader.innerHTML = `<i class="ti ti-loader spinning" style="font-size:22px;" aria-hidden="true"></i>`;
-      container.appendChild(loader);
-    } else if (apiState === 'error') {
-      const msg = document.createElement('p');
-      msg.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 16px;';
-      msg.textContent = 'Сервис недоступен — попробуй ещё раз';
-      container.appendChild(msg);
-    } else if (apiState.length === 0) {
-      const msg = document.createElement('p');
-      msg.style.cssText = 'font-size:13px;color:var(--muted);padding:10px 16px;';
-      msg.textContent = 'Не найдено';
-      container.appendChild(msg);
+    if (state === 'loading') {
+      const d = document.createElement('div');
+      d.style.cssText = 'text-align:center;padding:16px;color:var(--muted);';
+      d.innerHTML = `<i class="ti ti-loader spinning" style="font-size:22px;" aria-hidden="true"></i>`;
+      container.appendChild(d);
+    } else if (state === 'error') {
+      const p = document.createElement('p');
+      p.style.cssText = 'font-size:13px;color:var(--muted);padding:6px 16px;';
+      p.textContent = 'Сервис недоступен';
+      container.appendChild(p);
+    } else if (!state || state.length === 0) {
+      const p = document.createElement('p');
+      p.style.cssText = 'font-size:13px;color:var(--muted);padding:6px 16px;';
+      p.textContent = 'Не найдено';
+      container.appendChild(p);
     } else {
-      container.appendChild(buildProductCard(apiState, true));
+      container.appendChild(buildProductCard(state, true));
     }
   }
 
@@ -1597,6 +1684,8 @@
   // ── AI нутрициолог ────────────────────────────────────────
   function getGeminiKey() { return localStorage.getItem('gemini_key') || ''; }
   function setGeminiKey(k) { localStorage.setItem('gemini_key', k.trim()); }
+  function getUsdaKey()   { return localStorage.getItem('usda_key') || ''; }
+  function setUsdaKey(k)  { localStorage.setItem('usda_key', k.trim()); }
 
   async function loadAiScreen() {
     const body = document.getElementById('ai-panel-body');
@@ -1632,17 +1721,27 @@
 
     if (!key) {
       body.innerHTML = summaryCard + `
-        <div class="card" style="padding:16px 14px;">
-          <p style="font-size:14px;font-weight:500;color:var(--txt);margin-bottom:4px;">Введи ключ Gemini API</p>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
-            Получи бесплатно на aistudio.google.com
-          </p>
-          <input id="ai-key-inp" class="search-input" placeholder="AIzaSy..."
-            type="text" style="margin-bottom:10px;border-radius:8px;"/>
-          <button onclick="saveGeminiKey()"
+        <div class="card" style="padding:16px 14px;display:flex;flex-direction:column;gap:12px;">
+          <p style="font-size:14px;font-weight:600;color:var(--txt);">API ключи</p>
+
+          <div>
+            <p style="font-size:12px;font-weight:500;color:var(--txt);margin-bottom:4px;">Gemini API <span style="color:#e24b4a;">*</span></p>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:6px;">aistudio.google.com → бесплатно</p>
+            <input id="ai-key-inp" class="search-input" placeholder="AIzaSy..."
+              type="text" style="border-radius:8px;" value="${getGeminiKey()}"/>
+          </div>
+
+          <div>
+            <p style="font-size:12px;font-weight:500;color:var(--txt);margin-bottom:4px;">USDA FoodData Central</p>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:6px;">fdc.nal.usda.gov/api-guide → бесплатно</p>
+            <input id="usda-key-inp" class="search-input" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              type="text" style="border-radius:8px;" value="${getUsdaKey()}"/>
+          </div>
+
+          <button onclick="saveApiKeys()"
             style="width:100%;background:var(--acc2);border:none;border-radius:20px;
                    padding:10px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;">
-            Сохранить ключ
+            Сохранить
           </button>
         </div>`;
       return;
@@ -1656,12 +1755,59 @@
                display:flex;align-items:center;justify-content:center;gap:8px;">
         <i class="ti ti-sparkles" style="font-size:16px;" aria-hidden="true"></i>
         Анализировать день
+      </button>
+      <button onclick="openApiKeys()"
+        style="width:100%;background:none;border:none;padding:6px;
+               color:var(--muted);font-size:12px;cursor:pointer;">
+        🔑 изменить API ключи
       </button>`;
   }
 
+  function saveApiKeys() {
+    const g = document.getElementById('ai-key-inp')?.value || '';
+    const u = document.getElementById('usda-key-inp')?.value || '';
+    if (!g.trim()) {
+      document.getElementById('ai-key-inp').style.borderColor = '#e24b4a';
+      return;
+    }
+    setGeminiKey(g);
+    if (u.trim()) setUsdaKey(u);
+    loadAiScreen();
+  }
+
+  function openApiKeys() {
+    const body = document.getElementById('ai-panel-body');
+    if (!body) return;
+    body.innerHTML = `
+      <div class="card" style="padding:16px 14px;display:flex;flex-direction:column;gap:12px;">
+        <p style="font-size:14px;font-weight:600;color:var(--txt);">API ключи</p>
+        <div>
+          <p style="font-size:12px;font-weight:500;color:var(--txt);margin-bottom:4px;">Gemini API <span style="color:#e24b4a;">*</span></p>
+          <p style="font-size:11px;color:var(--muted);margin-bottom:6px;">aistudio.google.com → бесплатно</p>
+          <input id="ai-key-inp" class="search-input" placeholder="AIzaSy..."
+            type="text" style="border-radius:8px;" value="${getGeminiKey()}"/>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:500;color:var(--txt);margin-bottom:4px;">USDA FoodData Central</p>
+          <p style="font-size:11px;color:var(--muted);margin-bottom:6px;">fdc.nal.usda.gov/api-guide → бесплатно</p>
+          <input id="usda-key-inp" class="search-input" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            type="text" style="border-radius:8px;" value="${getUsdaKey()}"/>
+        </div>
+        <button onclick="saveApiKeys()"
+          style="width:100%;background:var(--acc2);border:none;border-radius:20px;
+                 padding:10px;color:#fff;font-size:14px;font-weight:500;cursor:pointer;">
+          Сохранить
+        </button>
+        <button onclick="loadAiScreen()"
+          style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:4px;">
+          ← Назад
+        </button>
+      </div>`;
+  }
+
   function saveGeminiKey() {
-    const k = document.getElementById('ai-key-inp').value;
-    if (!k.trim()) return;
+    const k = document.getElementById('ai-key-inp')?.value;
+    if (!k?.trim()) return;
     setGeminiKey(k);
     loadAiScreen();
   }
