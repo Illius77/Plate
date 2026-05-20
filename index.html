@@ -265,6 +265,27 @@
     .cal-day.selected { background: var(--green-pale); color: var(--acc); font-weight: 700; }
     .cal-day.muted { color: var(--muted); cursor: default; pointer-events: none; }
 
+    /* ── SETTINGS SHEET ── */
+    .settings-sheet {
+      display: none; position: absolute; inset: 0; z-index: 100;
+      flex-direction: column; justify-content: flex-end;
+    }
+    .settings-sheet.open { display: flex; }
+    .settings-panel {
+      position: relative; background: var(--bg); border-radius: 28px 28px 0 0;
+      padding: 16px 20px calc(20px + env(safe-area-inset-bottom,0px));
+      max-height: 85dvh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .settings-body { flex: 1; overflow-y: auto; min-height: 0; touch-action: pan-y; }
+    .settings-section { margin-bottom: 20px; }
+    .settings-section-title {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+    }
+    .settings-key-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .settings-key-label { font-size: 13px; font-weight: 500; color: var(--txt); }
+    .settings-key-hint { font-size: 11px; color: var(--muted); }
+
     /* ── AI SHEET ── */
     .ai-sheet {
       display: none; position: absolute; inset: 0; z-index: 100;
@@ -323,12 +344,20 @@
       <div>
         <div style="font-size:24px;font-weight:800;color:var(--txt);" id="diary-date-label">Сегодня</div>
       </div>
-      <button onclick="showCal()"
-        style="width:38px;height:38px;border-radius:50%;background:var(--card);border:none;
-               cursor:pointer;display:flex;align-items:center;justify-content:center;
-               box-shadow:0 2px 8px rgba(0,0,0,0.08);color:var(--muted);">
-        <i class="ti ti-calendar" style="font-size:18px;" aria-hidden="true"></i>
-      </button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="openSettings()"
+          style="width:38px;height:38px;border-radius:50%;background:var(--card);border:none;
+                 cursor:pointer;display:flex;align-items:center;justify-content:center;
+                 box-shadow:0 2px 8px rgba(0,0,0,0.08);color:var(--muted);">
+          <i class="ti ti-settings" style="font-size:18px;" aria-hidden="true"></i>
+        </button>
+        <button onclick="showCal()"
+          style="width:38px;height:38px;border-radius:50%;background:var(--card);border:none;
+                 cursor:pointer;display:flex;align-items:center;justify-content:center;
+                 box-shadow:0 2px 8px rgba(0,0,0,0.08);color:var(--muted);">
+          <i class="ti ti-calendar" style="font-size:18px;" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Полоска недели -->
@@ -636,6 +665,47 @@
                  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <i class="ti ti-send" style="font-size:16px;color:#fff;" aria-hidden="true"></i>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SETTINGS SHEET ==================== -->
+  <div class="settings-sheet" id="settings-sheet">
+    <div class="ai-backdrop" onclick="closeSettings()"></div>
+    <div class="settings-panel">
+      <div class="ai-handle" onclick="closeSettings()"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-shrink:0;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;border:0.5px solid var(--border);">
+          <i class="ti ti-settings" style="font-size:14px;color:var(--muted);" aria-hidden="true"></i>
+        </div>
+        <span style="font-size:16px;font-weight:700;color:var(--txt);">Настройки</span>
+      </div>
+      <div class="settings-body">
+        <div class="settings-section">
+          <div class="settings-section-title">API ключи</div>
+          <div class="settings-key-row">
+            <div class="settings-key-label">Gemini API Key</div>
+            <input id="st-gemini-inp" type="password"
+              style="width:100%;background:var(--card);border:0.5px solid var(--border);
+                     border-radius:10px;padding:11px 14px;color:var(--txt);font-size:14px;outline:none;"
+              placeholder="AIzaSy..."/>
+            <div class="settings-key-hint">Используется для AI нутрициолога</div>
+          </div>
+          <div class="settings-key-row">
+            <div class="settings-key-label">USDA API Key</div>
+            <input id="st-usda-inp" type="password"
+              style="width:100%;background:var(--card);border:0.5px solid var(--border);
+                     border-radius:10px;padding:11px 14px;color:var(--txt);font-size:14px;outline:none;"
+              placeholder="Оставить пустым — DEMO_KEY"/>
+            <div class="settings-key-hint">Для поиска базовых продуктов (USDA FoodData Central)</div>
+          </div>
+          <button onclick="saveSettingsKeys()"
+            style="width:100%;padding:13px;background:var(--acc);border:none;
+                   border-radius:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;">
+            Сохранить
+          </button>
+          <div id="st-saved-msg" style="display:none;text-align:center;margin-top:8px;font-size:13px;color:var(--acc);font-weight:600;">Сохранено ✓</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1983,6 +2053,31 @@ ${mealsText}Итого: ${Math.round(t.kcal)}ккал, белок ${Math.round(t
       else if (dx > 0 && i > 0) switchSearchTab(TABS[i - 1]);
     }, { passive: true });
   })();
+
+  function openSettings() {
+    const sheet = document.getElementById('settings-sheet');
+    document.getElementById('st-gemini-inp').value = getGeminiKey();
+    document.getElementById('st-usda-inp').value = getUsdaKey();
+    document.getElementById('st-saved-msg').style.display = 'none';
+    sheet.classList.add('open');
+  }
+
+  function closeSettings() {
+    document.getElementById('settings-sheet').classList.remove('open');
+  }
+
+  function saveSettingsKeys() {
+    const g = document.getElementById('st-gemini-inp').value.trim();
+    const u = document.getElementById('st-usda-inp').value.trim();
+    const inp = document.getElementById('st-gemini-inp');
+    if (!g) { inp.style.borderColor = '#e24b4a'; inp.focus(); return; }
+    inp.style.borderColor = '';
+    setGeminiKey(g);
+    if (u) setUsdaKey(u);
+    const msg = document.getElementById('st-saved-msg');
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  }
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
