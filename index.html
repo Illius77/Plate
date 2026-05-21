@@ -1033,7 +1033,6 @@
       if (mealKcal[m] > 0) {
         const n = mealCount[m];
         const word = n === 1 ? 'продукт' : n < 5 ? 'продукта' : 'продуктов';
-        document.getElementById('meal-' + m).classList.add('open');
         document.getElementById(m + 'h-sub').textContent = Math.round(mealKcal[m]) + ' ккал · ' + n + ' ' + word;
         document.getElementById(m + 'h-stats').classList.add('visible');
         document.getElementById(m + 'h-f').textContent = fmt1(mealMacros[m].f) + 'г';
@@ -1192,22 +1191,42 @@
       const boxH = Math.round(boxW * 0.5);
       scanner = new Html5Qrcode('qr-reader');
 
-      // Ищем основную заднюю камеру, избегая ультра-широкоугольной
-      let cameraConstraint = { facingMode: 'environment' };
+      const scanConfig = { fps: 10, qrbox: { width: boxW, height: boxH } };
+
+      const pickMain = cams => {
+        const labeled = cams.filter(c => c.label);
+        return labeled.find(c => /^back camera$/i.test(c.label))
+            || labeled.find(c => /(back|rear|задн)/i.test(c.label) && !/(ultra|wide|широко|сверх|telephoto|телефото)/i.test(c.label))
+            || labeled.find(c => /(back|rear|задн)/i.test(c.label));
+      };
+
+      // Try to pick main camera from labeled list (works if permission already granted)
+      let chosenId = null;
       try {
         const cameras = await Html5Qrcode.getCameras();
-        const main = cameras.find(c => /^back camera$/i.test(c.label))
-                  || cameras.find(c => /(back|rear|задн)/i.test(c.label) && !/(ultra|wide|широко|сверх|telephoto|телефото)/i.test(c.label))
-                  || cameras.find(c => /(back|rear|задн)/i.test(c.label));
-        if (main) cameraConstraint = main.id;
+        const main = pickMain(cameras);
+        if (main) chosenId = main.id;
       } catch(e) {}
 
       await scanner.start(
-        cameraConstraint,
-        { fps: 10, qrbox: { width: boxW, height: boxH } },
+        chosenId || { facingMode: 'environment' },
+        scanConfig,
         onBarcodeScanned,
         () => {}
       );
+
+      // On first launch labels were empty; re-enumerate now that permission is granted
+      if (!chosenId) {
+        try {
+          const cameras = await Html5Qrcode.getCameras();
+          const main = pickMain(cameras);
+          if (main) {
+            await scanner.stop();
+            await scanner.start(main.id, scanConfig, onBarcodeScanned, () => {});
+          }
+        } catch(e) {}
+      }
+
       statusEl.textContent = 'Наведите на штрихкод';
     } catch(e) {
       statusEl.textContent = 'Нет доступа к камере';
